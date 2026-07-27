@@ -2,6 +2,57 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import type { Page } from 'playwright';
 
+export interface WebsiteNamingInfo {
+  hostname: string;        // e.g. "domtree.io"
+  websiteDir: string;      // e.g. "./output/domtree.io"
+  screenshotsDir: string;  // e.g. "./output/domtree.io/screenshots"
+  contentDir: string;      // e.g. "./output/domtree.io/content"
+  pagename: string;        // e.g. "index" or "about_team"
+  timestamp: string;       // e.g. "2026-07-27_14-50-00"
+  baseFilename: string;    // e.g. "2026-07-27_14-50-00__index"
+}
+
+export function getWebsiteNaming(urlStr: string, baseOutputDir: string, customTimestamp?: string): WebsiteNamingInfo {
+  let hostname = 'unknown_domain';
+  let pagename = 'index';
+  try {
+    const parsed = new URL(urlStr);
+    hostname = parsed.hostname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    let pathname = parsed.pathname;
+    if (parsed.hash && (parsed.hash.startsWith('#/') || parsed.hash.startsWith('#!/'))) {
+      pathname += (pathname.endsWith('/') ? '' : '/') + parsed.hash.replace(/^#!?\//, '');
+    }
+    if (pathname === '/' || pathname === '') {
+      pagename = 'index';
+    } else {
+      pagename = pathname
+        .replace(/^\/+|\/+$/g, '')
+        .replace(/[^a-zA-Z0-9-_]/g, '_');
+    }
+    if (parsed.search) {
+      pagename += `_${Math.abs(hashCode(parsed.search))}`;
+    }
+  } catch {
+    pagename = `page_${Date.now()}`;
+  }
+
+  const timestamp = customTimestamp || new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
+  const websiteDir = path.join(baseOutputDir, hostname);
+  const screenshotsDir = path.join(websiteDir, 'screenshots');
+  const contentDir = path.join(websiteDir, 'content');
+  const baseFilename = `${timestamp}__${pagename}`;
+
+  return {
+    hostname,
+    websiteDir,
+    screenshotsDir,
+    contentDir,
+    pagename,
+    timestamp,
+    baseFilename,
+  };
+}
+
 /**
  * Sanitizes a URL into a safe filesystem filename.
  */
@@ -9,6 +60,9 @@ export function sanitizeUrlToFilename(urlStr: string): string {
   try {
     const parsed = new URL(urlStr);
     let pathname = parsed.pathname;
+    if (parsed.hash && (parsed.hash.startsWith('#/') || parsed.hash.startsWith('#!/'))) {
+      pathname += (pathname.endsWith('/') ? '' : '/') + parsed.hash.replace(/^#!?\//, '');
+    }
     if (pathname === '/' || pathname === '') {
       pathname = 'index';
     } else {
@@ -39,14 +93,42 @@ function hashCode(str: string): number {
 
 /**
  * Captures a full-page DOM screenshot of the current page and saves it to disk.
+ * Automatically scrolls to bottom and back to top first to trigger lazy-loaded SPA content.
  * @returns The file path where the screenshot was saved.
  */
-export async function captureScreenshot(page: Page, url: string, outputDir: string): Promise<string> {
-  const screenshotsDir = path.join(outputDir, 'screenshots');
-  await fs.mkdir(screenshotsDir, { recursive: true });
+export async function captureScreenshot(
+  page: Page,
+  url: string,
+  outputDir: string,
+  naming?: WebsiteNamingInfo
+): Promise<string> {
+  const info = naming || getWebsiteNaming(url, outputDir);
+  await fs.mkdir(info.screenshotsDir, { recursive: true });
 
-  const filename = sanitizeUrlToFilename(url);
-  const filePath = path.join(screenshotsDir, filename);
+  const filePath = path.join(info.screenshotsDir, `${info.baseFilename}.png`);
+
+  // Ensure full-page rendering by scrolling down and back to top (triggers SPA lazy loading & animations)
+  try {
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let totalHeight = 0;
+        const distance = 600;
+        const timer = setInterval(() => {
+          const scrollHeight = document.body?.scrollHeight || document.documentElement?.scrollHeight || 0;
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          if (totalHeight >= scrollHeight || totalHeight > 15000) {
+            clearInterval(timer);
+            window.scrollTo(0, 0);
+            resolve();
+          }
+        }, 80);
+      });
+    });
+    await page.waitForTimeout(500); // Allow layout animations to settle after scrolling back up
+  } catch {
+    // Ignore evaluation errors if page closed or restricted
+  }
 
   await page.screenshot({
     path: filePath,

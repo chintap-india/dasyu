@@ -37,9 +37,12 @@ export class DasyuCrawler {
   public normalizeUrl(urlStr: string): string {
     try {
       const parsed = new URL(urlStr);
-      parsed.hash = ''; // Remove fragment identifiers
+      // Only remove fragment identifiers if they are standard in-page anchors (not SPA hash routes like #/services)
+      if (!parsed.hash.startsWith('#/') && !parsed.hash.startsWith('#!/')) {
+        parsed.hash = '';
+      }
       let result = parsed.toString();
-      if (result.endsWith('/') && parsed.pathname !== '/') {
+      if (result.endsWith('/') && parsed.pathname !== '/' && !parsed.hash) {
         result = result.slice(0, -1);
       }
       return result;

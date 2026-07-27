@@ -56,16 +56,45 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
         case 'crawl':
         case 'c': {
-          if (!args[0]) {
-            logger.error('Please specify a URL to crawl: crawl <https://example.com> [depth]');
+          let url = '';
+          let depthVal = options.maxDepth;
+          let concVal = options.concurrency;
+          let outDirVal = options.outputDir!;
+          let contentVal = options.extractContent;
+
+          for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            if (arg === '-d' || arg === '--depth') {
+              const next = parseInt(args[++i], 10);
+              if (!isNaN(next)) depthVal = next;
+            } else if (arg === '-c' || arg === '--concurrency') {
+              const next = parseInt(args[++i], 10);
+              if (!isNaN(next)) concVal = next;
+            } else if (arg === '-o' || arg === '--output') {
+              outDirVal = args[++i] || outDirVal;
+            } else if (arg === '--content') {
+              contentVal = true;
+            } else if (arg === '--no-content') {
+              contentVal = false;
+            } else if (!arg.startsWith('-') && !url) {
+              url = arg;
+            } else if (!arg.startsWith('-') && url && !isNaN(parseInt(arg, 10)) && i === 1) {
+              depthVal = parseInt(arg, 10);
+            }
+          }
+
+          if (!url) {
+            logger.error('Please specify a URL to crawl: crawl <https://example.com> [depth|--depth N]');
             break;
           }
-          const url = args[0];
-          const depthArg = args[1] ? parseInt(args[1], 10) : options.maxDepth;
+
           const crawlOpts: CrawlOptions = {
             ...options,
             startUrl: url,
-            maxDepth: !isNaN(depthArg!) ? depthArg : options.maxDepth,
+            maxDepth: depthVal,
+            concurrency: concVal,
+            outputDir: outDirVal,
+            extractContent: contentVal,
           };
 
           logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency})...`);
@@ -82,7 +111,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
           sessionPages.push(...result.pages);
           logger.success(`Crawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s! Captured ${result.pages.length} pages.`);
-          console.log(`  📁 Screenshots & Content saved to: ${pc.bold(logger.tomato(options.outputDir!))}`);
+          console.log(`  📁 Screenshots & Content saved to: ${pc.bold(logger.tomato(crawlOpts.outputDir!))}`);
           break;
         }
 

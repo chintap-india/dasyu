@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import type { Page } from 'playwright';
 import TurndownService from 'turndown';
-import { sanitizeUrlToFilename } from './screenshot';
+import { getWebsiteNaming, type WebsiteNamingInfo } from './screenshot';
 
 export interface ExtractedContentResult {
   contentPath: string;
@@ -16,9 +16,11 @@ export interface ExtractedContentResult {
 export async function extractPageContent(
   page: Page,
   url: string,
-  outputDir: string
+  outputDir: string,
+  naming?: WebsiteNamingInfo
 ): Promise<ExtractedContentResult> {
-  const contentDir = path.join(outputDir, 'content');
+  const info = naming || getWebsiteNaming(url, outputDir);
+  const contentDir = info.contentDir;
   await fs.mkdir(contentDir, { recursive: true });
 
   // 1. Extract metadata and clean DOM snapshot via browser evaluation
@@ -73,9 +75,8 @@ export async function extractPageContent(
     rawMarkdown;
 
   // 4. Save Markdown and JSON report to disk
-  const baseFilename = sanitizeUrlToFilename(url).replace(/\.png$/, '');
-  const mdPath = path.join(contentDir, `${baseFilename}.md`);
-  const jsonPath = path.join(contentDir, `${baseFilename}.json`);
+  const mdPath = path.join(contentDir, `${info.baseFilename}.md`);
+  const jsonPath = path.join(contentDir, `${info.baseFilename}.json`);
 
   await Promise.all([
     fs.writeFile(mdPath, formattedMarkdown, 'utf-8'),
