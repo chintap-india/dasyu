@@ -1,0 +1,237 @@
+import readline from 'node:readline';
+import pc from 'picocolors';
+import { DasyuCrawler } from '../core/crawler';
+import { BrowserManager } from '../core/browser';
+import type { CrawlOptions, PageData } from '../core/types';
+import { logger } from './logger';
+import { captureScreenshot } from '../extractors/screenshot';
+import { extractPageContent } from '../extractors/content';
+import pkg from '../../package.json';
+
+/**
+ * Starts the interactive Dasyu REPL shell.
+ */
+export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Promise<void> {
+  const browserManager = new BrowserManager({ headless: true });
+  const options: CrawlOptions = {
+    startUrl: '',
+    maxDepth: initialOptions.maxDepth ?? 1,
+    concurrency: initialOptions.concurrency ?? 3,
+    outputDir: initialOptions.outputDir ?? './output',
+    extractContent: initialOptions.extractContent ?? true,
+    allowExternal: initialOptions.allowExternal ?? false,
+  };
+
+  const sessionPages: PageData[] = [];
+
+  console.log(pc.bold(logger.tomato(`\n⚔  DASYU (दस्यु) v${pkg.version} — Interactive Web Snapshot REPL ⚔`)));
+  console.log(pc.dim('The Outlaw of the Web. Roam links, capture snapshots, extract treasure.\n'));
+  console.log(`Type ${pc.cyan('help')} to see available commands or ${pc.cyan('exit')} to leave.\n`);
+  printConfig(options);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: pc.bold(logger.tomato('dasyu> ')),
+  });
+
+  rl.prompt();
+
+  rl.on('line', async (line) => {
+    const input = line.trim();
+    if (!input) {
+      rl.prompt();
+      return;
+    }
+
+    const [cmd, ...args] = input.split(/\s+/);
+    const argStr = args.join(' ');
+
+    try {
+      switch (cmd.toLowerCase()) {
+        case 'help':
+        case '?':
+          printHelp();
+          break;
+
+        case 'crawl':
+        case 'c': {
+          if (!args[0]) {
+            logger.error('Please specify a URL to crawl: crawl <https://example.com> [depth]');
+            break;
+          }
+          const url = args[0];
+          const depthArg = args[1] ? parseInt(args[1], 10) : options.maxDepth;
+          const crawlOpts: CrawlOptions = {
+            ...options,
+            startUrl: url,
+            maxDepth: !isNaN(depthArg!) ? depthArg : options.maxDepth,
+          };
+
+          logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency})...`);
+          const crawler = new DasyuCrawler(crawlOpts, browserManager);
+          
+          const result = await crawler.run((page, completed, queueSize) => {
+            if (page.error) {
+              console.log(`  [${completed}] ${pc.red('ERROR')} ${page.url} — ${pc.red(page.error)}`);
+            } else {
+              const statusColor = page.status === 200 ? pc.green : pc.yellow;
+              console.log(`  [${completed}] ${statusColor(page.status.toString())} ${page.url} (depth ${page.depth})`);
+            }
+          });
+
+          sessionPages.push(...result.pages);
+          logger.success(`Crawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s! Captured ${result.pages.length} pages.`);
+          console.log(`  📁 Screenshots & Content saved to: ${pc.bold(logger.tomato(options.outputDir!))}`);
+          break;
+        }
+
+        case 'goto':
+        case 'g':
+        case 'snap': {
+          if (!args[0]) {
+            logger.error('Please specify a URL: goto <https://example.com>');
+            break;
+          }
+          const url = args[0];
+          logger.info(`Snapping ${pc.cyan(url)}...`);
+          const page = await browserManager.acquirePage();
+          try {
+            const res = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 }).catch(async () => {
+              return page.goto(url, { waitUntil: 'load', timeout: 30000 });
+            });
+            await page.waitForTimeout(1000);
+            const status = res?.status() || 200;
+            const title = (await page.title()) || url;
+            const screenshotPath = await captureScreenshot(page, url, options.outputDir!);
+            let contentPath: string | undefined;
+            if (options.extractContent) {
+              const resContent = await extractPageContent(page, url, options.outputDir!);
+              contentPath = resContent.contentPath;
+            }
+            const pageData: PageData = {
+              url,
+              depth: 0,
+              title,
+              status,
+              screenshotPath,
+              contentPath,
+              links: [],
+            };
+            sessionPages.push(pageData);
+            logger.success(`Captured snapshot for ${pc.cyan(title)} (${status})`);
+            console.log(`  📸 Screenshot: ${pc.bold(logger.tomato(screenshotPath))}`);
+            if (contentPath) console.log(`  📝 Markdown:   ${pc.bold(logger.tomato(contentPath))}`);
+          } finally {
+            await browserManager.releasePage(page);
+          }
+          break;
+        }
+
+        case 'pages':
+        case 'ls':
+        case 'list': {
+          if (sessionPages.length === 0) {
+            logger.info('No pages captured yet in this session. Run "crawl <url>" or "goto <url>".');
+          } else {
+            logger.header(`Captured Pages (${sessionPages.length})`);
+            sessionPages.forEach((p, idx) => {
+              const statusStr = p.status === 200 ? pc.green('200') : pc.red(p.status.toString());
+              console.log(`[${idx + 1}] ${statusStr} ${pc.bold(p.title || 'Untitled')} — ${pc.dim(p.url)}`);
+              if (p.screenshotPath) console.log(`    📸 ${pc.dim(p.screenshotPath)}`);
+              if (p.contentPath) console.log(`    📝 ${pc.dim(p.contentPath)}`);
+            });
+          }
+          break;
+        }
+
+        case 'inspect':
+        case 'i': {
+          const idx = parseInt(args[0], 10) - 1;
+          if (isNaN(idx) || !sessionPages[idx]) {
+            logger.error(`Invalid page index. Use "pages" to list available indexes (1-${sessionPages.length}).`);
+          } else {
+            const p = sessionPages[idx];
+            logger.header(`Inspecting Page #${idx + 1}`);
+            console.log(JSON.stringify(p, null, 2));
+          }
+          break;
+        }
+
+        case 'config':
+        case 'cfg': {
+          if (!args[0]) {
+            printConfig(options);
+          } else {
+            const key = args[0].toLowerCase();
+            const val = args[1];
+            if (val === undefined) {
+              logger.error('Please specify a value: config <key> <value>');
+            } else if (key === 'depth' || key === 'maxdepth') {
+              options.maxDepth = parseInt(val, 10) || 1;
+              logger.success(`maxDepth set to ${options.maxDepth}`);
+            } else if (key === 'concurrency') {
+              options.concurrency = parseInt(val, 10) || 3;
+              logger.success(`concurrency set to ${options.concurrency}`);
+            } else if (key === 'output' || key === 'outputdir') {
+              options.outputDir = val;
+              logger.success(`outputDir set to "${options.outputDir}"`);
+            } else if (key === 'content' || key === 'extractcontent') {
+              options.extractContent = val === 'true' || val === '1';
+              logger.success(`extractContent set to ${options.extractContent}`);
+            } else {
+              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content`);
+            }
+          }
+          break;
+        }
+
+        case 'clear':
+        case 'cls':
+          console.clear();
+          break;
+
+        case 'exit':
+        case 'quit':
+        case 'q':
+          logger.info('Shutting down Dasyu browser session and exiting REPL...');
+          await browserManager.close();
+          rl.close();
+          process.exit(0);
+          break;
+
+        default:
+          logger.error(`Unknown command: "${cmd}". Type "help" for a list of commands.`);
+          break;
+      }
+    } catch (err: any) {
+      logger.error(`Error: ${err?.message || String(err)}`);
+    }
+
+    rl.prompt();
+  });
+
+  rl.on('close', async () => {
+    await browserManager.close();
+    process.exit(0);
+  });
+}
+
+function printHelp(): void {
+  logger.header('Dasyu REPL Commands');
+  console.log(`  ${pc.cyan('crawl <url> [depth]')}    Crawl URL up to depth N (default from config)`);
+  console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
+  console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session`);
+  console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
+  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content)`);
+  console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
+  console.log(`  ${pc.cyan('exit')}                   Close browser and exit REPL\n`);
+}
+
+function printConfig(opts: CrawlOptions): void {
+  console.log(pc.dim('Current Session Configuration:'));
+  console.log(`  ${pc.bold('depth')}:       ${opts.maxDepth} (max: 5)`);
+  console.log(`  ${pc.bold('concurrency')}: ${opts.concurrency} pages`);
+  console.log(`  ${pc.bold('output')}:      ${opts.outputDir}`);
+  console.log(`  ${pc.bold('content')}:     ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}\n`);
+}
