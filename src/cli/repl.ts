@@ -216,8 +216,11 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             } else if (key === 'content' || key === 'extractcontent') {
               options.extractContent = val === 'true' || val === '1';
               logger.success(`extractContent set to ${options.extractContent}`);
+            } else if (key === 'allowexternal' || key === 'allow-external') {
+              options.allowExternal = val === 'true' || val === '1';
+              logger.success(`allowExternal set to ${options.allowExternal}`);
             } else {
-              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content`);
+              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content, allow-external`);
             }
           }
           break;
@@ -256,19 +259,21 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
 function printHelp(): void {
   logger.header('Dasyu REPL Commands');
-  console.log(`  ${pc.cyan('crawl <url> [depth]')}    Crawl URL up to depth N (default from config)`);
+  console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N`);
+  console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, --content/--no-content, --allow-external, --debug')}`);
   console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
   console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session`);
   console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
-  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content)`);
+  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, allow-external)`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
   console.log(`  ${pc.cyan('exit')}                   Close browser and exit REPL\n`);
 }
 
 function printConfig(opts: CrawlOptions): void {
   console.log(pc.dim('Current Session Configuration:'));
-  console.log(`  ${pc.bold('depth')}:       ${opts.maxDepth} (max: 5)`);
-  console.log(`  ${pc.bold('concurrency')}: ${opts.concurrency} pages`);
-  console.log(`  ${pc.bold('output')}:      ${opts.outputDir}`);
-  console.log(`  ${pc.bold('content')}:     ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}\n`);
+  console.log(`  ${pc.bold('depth')}:          ${opts.maxDepth} (max: 5)`);
+  console.log(`  ${pc.bold('concurrency')}:    ${opts.concurrency} pages`);
+  console.log(`  ${pc.bold('output')}:         ${opts.outputDir}`);
+  console.log(`  ${pc.bold('content')}:        ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}`);
+  console.log(`  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}\n`);
 }
