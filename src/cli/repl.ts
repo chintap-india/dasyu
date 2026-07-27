@@ -332,11 +332,11 @@ function printBanner(opts: CrawlOptions): void {
   console.log(`${pc.bold('              ')}    Type ${pc.cyan('help')} to see available commands or ${pc.cyan('exit')} to leave.`);
   console.log(`${pc.bold('  ██        ██')}    `);
   console.log(`${pc.bold('              ')}    ${c}`);
-  console.log(`${pc.bold('  ██        ██')}    ${d}`);
+  console.log(`${pc.bold(logger.tomato('  ████████████'))}    ${d}`);
   console.log(`${pc.bold('              ')}    ${conc}`);
   console.log(`${pc.bold(logger.tomato('  ████████████'))}    ${out}`);
   console.log(`${pc.bold('              ')}    ${cont}`);
-  console.log(`${pc.bold(logger.tomato('  ████████████'))}    ${ext}`);
+  console.log(`${pc.bold('              ')}    ${ext}`);
   console.log(`${pc.bold('              ')}    ${auth}`);
   console.log('');
 }
