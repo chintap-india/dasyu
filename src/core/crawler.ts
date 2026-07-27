@@ -26,7 +26,7 @@ export class DasyuCrawler {
       this.browserManager = browserManager;
       this.persistentBrowser = true;
     } else {
-      this.browserManager = new BrowserManager();
+      this.browserManager = new BrowserManager({ storageState: options.storageState });
       this.persistentBrowser = false;
     }
   }
@@ -42,7 +42,7 @@ export class DasyuCrawler {
         parsed.hash = '';
       }
       let result = parsed.toString();
-      if (result.endsWith('/') && parsed.pathname !== '/' && !parsed.hash) {
+      if (result.endsWith('/') && (parsed.pathname !== '/' || parsed.hash.length > 0)) {
         result = result.slice(0, -1);
       }
       return result;

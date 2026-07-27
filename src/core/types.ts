@@ -19,6 +19,8 @@ export interface CrawlOptions {
   allowExternal?: boolean;
   /** Enable verbose debug logging in terminal. Default is false. */
   debug?: boolean;
+  /** Optional Playwright storageState file path or object (cookies, localStorage) for authenticated crawling. */
+  storageState?: string | Record<string, any>;
   /** Optional array of plugins for lifecycle hook extensions (e.g., accessibility auditing). */
   plugins?: DasyuPlugin[];
 }

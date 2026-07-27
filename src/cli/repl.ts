@@ -12,7 +12,7 @@ import pkg from '../../package.json';
  * Starts the interactive Dasyu REPL shell.
  */
 export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Promise<void> {
-  const browserManager = new BrowserManager({ headless: true });
+  const browserManager = new BrowserManager({ headless: true, storageState: initialOptions.storageState });
   const options: CrawlOptions = {
     startUrl: '',
     maxDepth: initialOptions.maxDepth ?? 1,
@@ -20,6 +20,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
     outputDir: initialOptions.outputDir ?? './output',
     extractContent: initialOptions.extractContent ?? true,
     allowExternal: initialOptions.allowExternal ?? false,
+    storageState: initialOptions.storageState,
   };
 
   const sessionPages: PageData[] = [];
@@ -63,6 +64,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           let contentVal = options.extractContent;
           let extVal = options.allowExternal;
           let debugVal = options.debug;
+          let storageVal = options.storageState;
 
           for (let i = 0; i < args.length; i++) {
             const arg = args[i];
@@ -74,6 +76,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
               if (!isNaN(next)) concVal = next;
             } else if (arg === '-o' || arg === '--output') {
               outDirVal = args[++i] || outDirVal;
+            } else if (arg === '-s' || arg === '--storage-state' || arg === '--auth') {
+              storageVal = args[++i] || storageVal;
             } else if (arg === '--content') {
               contentVal = true;
             } else if (arg === '--no-content') {
@@ -94,6 +98,10 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             break;
           }
 
+          if (storageVal !== options.storageState) {
+            await browserManager.setStorageState(storageVal);
+          }
+
           const crawlOpts: CrawlOptions = {
             ...options,
             startUrl: url,
@@ -103,9 +111,10 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             extractContent: contentVal,
             allowExternal: extVal,
             debug: debugVal,
+            storageState: storageVal,
           };
 
-          logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency})...`);
+          logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency}${storageVal ? `, auth: ${storageVal}` : ''})...`);
           const crawler = new DasyuCrawler(crawlOpts, browserManager);
           
           const result = await crawler.run((page, completed, queueSize) => {
@@ -219,9 +228,37 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             } else if (key === 'allowexternal' || key === 'allow-external') {
               options.allowExternal = val === 'true' || val === '1';
               logger.success(`allowExternal set to ${options.allowExternal}`);
+            } else if (key === 'auth' || key === 'storage-state' || key === 'storagestate') {
+              options.storageState = val === 'none' || val === 'null' ? undefined : val;
+              await browserManager.setStorageState(options.storageState);
+              logger.success(`storageState (auth) set to ${options.storageState || 'none'}`);
             } else {
-              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content, allow-external`);
+              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content, allow-external, auth`);
             }
+          }
+          break;
+        }
+
+        case 'auth':
+        case 'storage-state': {
+          const sub = args[0]?.toLowerCase();
+          const p = args[1] || args[0];
+          if (sub === 'save') {
+            const targetPath = args[1] || './auth.json';
+            await browserManager.saveStorageState(targetPath);
+            logger.success(`Saved browser authentication state (cookies, localStorage) to ${targetPath}`);
+          } else if (sub === 'load' || sub === 'set' || (p && sub !== 'clear' && sub !== 'none')) {
+            const targetPath = sub === 'load' || sub === 'set' ? args[1] : p;
+            options.storageState = targetPath;
+            await browserManager.setStorageState(targetPath);
+            logger.success(`Loaded authentication storageState from "${targetPath}" for subsequent crawls`);
+          } else if (sub === 'clear' || sub === 'none') {
+            options.storageState = undefined;
+            await browserManager.setStorageState(undefined);
+            logger.success('Cleared authentication storageState');
+          } else {
+            logger.info(`Current auth storageState: ${options.storageState || pc.dim('none')}`);
+            logger.info('Usage: auth load <path.json> | auth save <path.json> | auth clear');
           }
           break;
         }
@@ -260,11 +297,12 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 function printHelp(): void {
   logger.header('Dasyu REPL Commands');
   console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N`);
-  console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, --content/--no-content, --allow-external, --debug')}`);
+  console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, -s/--auth <path>, --content, --allow-external')}`);
   console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
   console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session`);
   console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
-  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, allow-external)`);
+  console.log(`  ${pc.cyan('auth <load|save|clear>')} Manage Playwright storageState (cookies, localStorage)`);
+  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth)`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
   console.log(`  ${pc.cyan('exit')}                   Close browser and exit REPL\n`);
 }
@@ -275,5 +313,6 @@ function printConfig(opts: CrawlOptions): void {
   console.log(`  ${pc.bold('concurrency')}:    ${opts.concurrency} pages`);
   console.log(`  ${pc.bold('output')}:         ${opts.outputDir}`);
   console.log(`  ${pc.bold('content')}:        ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}`);
-  console.log(`  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}\n`);
+  console.log(`  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}`);
+  console.log(`  ${pc.bold('auth (storage)')}: ${opts.storageState ? pc.cyan(String(opts.storageState)) : pc.dim('none')}\n`);
 }

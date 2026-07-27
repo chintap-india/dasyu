@@ -6,6 +6,7 @@ export interface BrowserManagerOptions {
   userAgent?: string;
   browserType?: 'chromium' | 'firefox' | 'webkit';
   channel?: string;
+  storageState?: string | Record<string, any>;
 }
 
 /**
@@ -25,6 +26,7 @@ export class BrowserManager {
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 DasyuBot/0.1',
       browserType: options.browserType ?? 'chromium',
       channel: options.channel,
+      storageState: options.storageState,
     };
   }
 
@@ -73,8 +75,32 @@ export class BrowserManager {
         viewport: this.options.viewport,
         userAgent: this.options.userAgent,
         ignoreHTTPSErrors: true,
+        storageState: this.options.storageState as any,
       });
     }
+  }
+
+  /**
+   * Dynamically updates the authentication storageState for future browser contexts.
+   */
+  async setStorageState(storageState?: string | Record<string, any>): Promise<void> {
+    this.options.storageState = storageState;
+    if (this.context) {
+      await this.context.close().catch(() => {});
+      this.context = null;
+    }
+  }
+
+  /**
+   * Saves the current context storageState (cookies, localStorage) to an object or file path.
+   */
+  async saveStorageState(path?: string): Promise<Record<string, any> | undefined> {
+    if (!this.context) return undefined;
+    if (path) {
+      await this.context.storageState({ path });
+      return undefined;
+    }
+    return this.context.storageState();
   }
 
   /**

@@ -52,9 +52,33 @@ npx dasyu crawl https://example.com --depth 2 --concurrency 5 --content
 | `-d, --depth <number>` | Crawl depth ($1 \le N \le 5$) | `1` |
 | `-c, --concurrency <number>` | Max parallel browser pages | `3` |
 | `-o, --output <dir>` | Output directory for screenshots & content | `./output` |
+| `-s, --storage-state <path>` | Playwright `storageState` JSON path (cookies, localStorage) | `undefined` |
+| `--auth <path>` | Alias for `-s, --storage-state` | `undefined` |
 | `--content` | Extract clean Markdown content & JSON metadata | `false` |
 | `--allow-external` | Allow crawling links outside starting domain | `false` |
 | `--debug` | Enable verbose debug logging | `false` |
+
+---
+
+## 🔐 Authenticated Crawling (`storageState`)
+
+Dasyu natively integrates Playwright's **`storageState`** feature, enabling developers to automatically crawl authenticated web applications, dashboards, admin panels, and user profiles without needing to script login flows!
+
+Simply pass a saved Playwright `storageState` JSON file containing cookies and `localStorage`:
+```bash
+# Via CLI using -s / --storage-state (or --auth)
+npx dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+```
+
+In the interactive REPL, you can dynamically load, save, or clear authentication states on the fly:
+```bash
+dasyu> auth load ./my-cookies.json
+✔ Loaded authentication storageState from "./my-cookies.json" for subsequent crawls
+
+dasyu> crawl https://app.example.com/settings 2
+# Or save your current session's auth state for future use:
+dasyu> auth save ./saved-session.json
+```
 
 ---
 
@@ -68,11 +92,12 @@ npx dasyu
 ```
 
 Inside the `dasyu> ` prompt:
-- `crawl <url> [depth]` — Crawls a website, taking snapshots and extracting Markdown.
+- `crawl <url> [depth]` — Crawls a website, taking snapshots and extracting Markdown. Supports flags like `--auth <path>`.
 - `goto <url>` (or `snap <url>`) — Captures a one-off snapshot of a single page.
 - `pages` (or `ls`, `list`) — Lists all pages captured in the current session.
 - `inspect <index|url>` — Shows detailed JSON metadata, links, and file paths for a captured page.
-- `config [key] [val]` — Views or live-updates crawler settings (concurrency, depth, outputDir).
+- `auth <load|save|clear>` — Dynamically manage Playwright authentication storageState (cookies & localStorage).
+- `config [key] [val]` — Views or live-updates crawler settings (concurrency, depth, outputDir, auth).
 - `clear` — Clears screen and prints the version banner.
 
 *Note on SPAs*: Dasyu automatically waits for network idle (`networkidle`) and client-side rendering before capturing snapshots, ensuring Angular (`domtree.io`), React, and Vue applications render completely!
@@ -100,13 +125,12 @@ import { DasyuCrawler } from 'dasyu';
 
 async function main() {
   const crawler = new DasyuCrawler({
-    startUrl: 'https://example.com',
+    startUrl: 'https://example.com/app',
     maxDepth: 2,
     concurrency: 3,
     extractContent: true,
     outputDir: './my-snapshots',
-    // Future plugins:
-    // plugins: [new AccessibilityAuditPlugin({ standard: 'wcag2aa' })]
+    storageState: './auth.json', // Authenticated crawl with Playwright storageState!
   });
 
   const report = await crawler.run();

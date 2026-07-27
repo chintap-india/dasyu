@@ -26,6 +26,8 @@ export async function main(): Promise<void> {
     .option('-d, --depth <number>', 'Default crawl depth', '1')
     .option('-c, --concurrency <number>', 'Max concurrent pages', '3')
     .option('-o, --output <dir>', 'Output directory', './output')
+    .option('-s, --storage-state <path>', 'Playwright storageState JSON path for authentication')
+    .option('--auth <path>', 'Alias for --storage-state')
     .option('--no-content', 'Disable markdown content extraction')
     .action(async (opts) => {
       await startRepl({
@@ -33,6 +35,7 @@ export async function main(): Promise<void> {
         concurrency: parseInt(opts.concurrency, 10) || 3,
         outputDir: opts.output,
         extractContent: opts.content !== false,
+        storageState: opts.storageState || opts.auth,
       });
     });
 
@@ -42,13 +45,16 @@ export async function main(): Promise<void> {
     .option('-d, --depth <number>', 'Crawl depth (1-5)', '1')
     .option('-c, --concurrency <number>', 'Max concurrent pages', '3')
     .option('-o, --output <dir>', 'Output directory', './output')
+    .option('-s, --storage-state <path>', 'Playwright storageState JSON path for authentication')
+    .option('--auth <path>', 'Alias for --storage-state')
     .option('--content', 'Extract markdown content and JSON metadata', false)
     .option('--allow-external', 'Allow crawling external domains', false)
     .action(async (url, opts) => {
       const depth = parseInt(opts.depth, 10) || 1;
       const concurrency = parseInt(opts.concurrency, 10) || 3;
+      const storageState = opts.storageState || opts.auth;
 
-      logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth})`);
+      logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
       const crawler = new DasyuCrawler({
         startUrl: url,
@@ -57,6 +63,7 @@ export async function main(): Promise<void> {
         outputDir: opts.output,
         extractContent: Boolean(opts.content),
         allowExternal: Boolean(opts.allowExternal),
+        storageState,
       });
 
       try {
