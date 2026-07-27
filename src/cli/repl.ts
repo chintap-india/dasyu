@@ -61,6 +61,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           let concVal = options.concurrency;
           let outDirVal = options.outputDir!;
           let contentVal = options.extractContent;
+          let extVal = options.allowExternal;
+          let debugVal = options.debug;
 
           for (let i = 0; i < args.length; i++) {
             const arg = args[i];
@@ -76,6 +78,10 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
               contentVal = true;
             } else if (arg === '--no-content') {
               contentVal = false;
+            } else if (arg === '--allow-external') {
+              extVal = true;
+            } else if (arg === '--debug') {
+              debugVal = true;
             } else if (!arg.startsWith('-') && !url) {
               url = arg;
             } else if (!arg.startsWith('-') && url && !isNaN(parseInt(arg, 10)) && i === 1) {
@@ -95,6 +101,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             concurrency: concVal,
             outputDir: outDirVal,
             extractContent: contentVal,
+            allowExternal: extVal,
+            debug: debugVal,
           };
 
           logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency})...`);
