@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import fs from 'node:fs/promises';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { startRepl } from './repl';
@@ -18,6 +19,24 @@ export async function main(): Promise<void> {
     .action(async () => {
       // Default action when no subcommand is provided: launch the interactive REPL!
       await startRepl();
+    });
+
+  program
+    .command('clean [dirs...]')
+    .aliases(['reset', 'clear-output'])
+    .description('Clean and reset generated output folders (default: ./output and ./results)')
+    .action(async (dirs?: string[]) => {
+      const targets = (dirs && dirs.length > 0) ? dirs : ['./output', './results'];
+      try {
+        for (const target of targets) {
+          await fs.rm(target, { recursive: true, force: true });
+        }
+        logger.success(`✔ Cleaned output director${targets.length > 1 ? 'ies' : 'y'}: ${targets.map(t => pc.cyan(t)).join(', ')}`);
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Failed to clean output directory: ${err?.message || String(err)}`);
+        process.exit(1);
+      }
     });
 
   program

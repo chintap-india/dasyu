@@ -20,14 +20,24 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Setup (Local Beta)
+
+> **Note:** Official NPM registry publishing is held in our Roadmap until beta testing completes. For now, install and run Dasyu directly from the cloned repository!
 
 ```bash
-# Install globally or run via npx
-npx dasyu crawl https://example.com
+# Clone the repository
+git clone https://github.com/001bharathchetty/dasyu.git
+cd dasyu
 
-# Or install as a dependency in your Node.js project
-npm install dasyu
+# Install dependencies and compile TypeScript
+npm install
+npm run build
+
+# Link globally (optional) to use the `dasyu` command everywhere
+npm link
+
+# Or run directly via Node:
+node bin/dasyu.js --help
 ```
 
 ---
@@ -36,16 +46,21 @@ npm install dasyu
 
 ```bash
 # Basic screenshot & crawl 1 level deep (default)
-npx dasyu crawl https://example.com --output ./results
+dasyu crawl https://example.com --output ./results
 
 # Crawl 3 levels deep, generating full-page screenshots AND clean Markdown content reports
-npx dasyu crawl https://example.com --depth 3 --content --output ./results
+dasyu crawl https://example.com --depth 3 --content --output ./results
 
 # Crawl an authenticated web app or dashboard using saved Playwright storageState cookies & localStorage
-npx dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
 
 # Specify concurrency limit (default is 3 parallel pages)
-npx dasyu crawl https://example.com --depth 2 --concurrency 5 --content
+dasyu crawl https://example.com --depth 2 --concurrency 5 --content
+
+# Clean/reset generated output folders (wipes ./output and ./results by default)
+dasyu clean
+# Or clean a specific directory:
+dasyu clean ./my-snapshots
 ```
 
 ### CLI Options
@@ -70,7 +85,7 @@ Dasyu natively integrates Playwright's **`storageState`** feature, enabling deve
 Simply pass a saved Playwright `storageState` JSON file containing cookies and `localStorage`:
 ```bash
 # Via CLI using -s / --storage-state (or --auth)
-npx dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
 ```
 
 In the interactive REPL, you can dynamically load, save, or clear authentication states on the fly:
@@ -90,7 +105,7 @@ dasyu> auth save ./saved-session.json
 Running `dasyu` with no arguments launches an interactive, tomato-styled REPL shell where you can live-command the crawler and inspect results:
 
 ```bash
-npx dasyu
+dasyu
 # or: dasyu repl
 ```
 
@@ -101,7 +116,9 @@ Inside the `dasyu> ` prompt:
 - `inspect <index|url>` — Shows detailed JSON metadata, links, and file paths for a captured page.
 - `auth <load|save|clear>` — Dynamically manage Playwright authentication storageState (cookies & localStorage).
 - `config [key] [val]` — Views or live-updates crawler settings (concurrency, depth, outputDir, auth).
+- `clean [dir]` (or `reset [dir]`) — Clears generated output directories and resets the session captured pages list.
 - `clear` — Clears screen and prints the version banner.
+- `exit` — Closes browser session and exits REPL.
 
 Example REPL session with authentication:
 ```bash
@@ -118,23 +135,11 @@ Current Session Configuration:
   auth (storage): ./my-cookies.json
 
 dasyu> crawl https://app.example.com/settings --depth 2
+dasyu> clean
+✔ Cleaned output directory (./output, ./results) and reset session pages.
 ```
 
 *Note on SPAs*: Dasyu automatically waits for network idle (`networkidle`) and client-side rendering before capturing snapshots, ensuring Angular (`domtree.io`), React, and Vue applications render completely!
-
----
-
-## 📦 Version Management & Publishing
-
-To bump the version and push tags for npm publishing:
-```bash
-# Bump patch version (e.g. 0.1.0 -> 0.1.1) and push tags
-npm run bump:patch
-
-# Bump minor or major version
-npm run bump:minor
-npm run bump:major
-```
 
 ---
 
@@ -162,8 +167,20 @@ main();
 
 ---
 
-## 🔌 Plugin Architecture (Roadmap)
+## 🗺️ Roadmap & Future Plans
 
+### 📦 NPM Package Publishing & Versioning
+We are holding official NPM registry publishing until full beta testing and SPA test coverage are completed. Once ready, version management and publishing will be handled via:
+```bash
+# Bump patch version (e.g. 0.1.0 -> 0.1.1) and push tags
+npm run bump:patch
+
+# Bump minor or major version
+npm run bump:minor
+npm run bump:major
+```
+
+### 🔌 Extensible Plugin Architecture
 Dasyu is designed to be easily extensible without modifying the core crawler engine:
 - **`onPageLoad(page, url, depth)`**: Hook invoked after page navigation settles.
 - **`onScreenshot(page, screenshotPath)`**: Hook invoked after full-page snapshot is captured.

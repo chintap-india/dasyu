@@ -1,4 +1,5 @@
 import readline from 'node:readline';
+import fs from 'node:fs/promises';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { BrowserManager } from '../core/browser';
@@ -260,6 +261,21 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           break;
         }
 
+        case 'clean':
+        case 'reset': {
+          const targets = args.length > 0 ? args : [options.outputDir || './output', './results'];
+          try {
+            for (const target of targets) {
+              await fs.rm(target, { recursive: true, force: true });
+            }
+            sessionPages.length = 0;
+            logger.success(`✔ Cleaned output director${targets.length > 1 ? 'ies' : 'y'} (${targets.map(t => pc.cyan(t)).join(', ')}) and reset session pages.`);
+          } catch (err: any) {
+            logger.error(`Failed to clean output directory: ${err?.message || String(err)}`);
+          }
+          break;
+        }
+
         case 'clear':
         case 'cls':
           console.clear();
@@ -301,6 +317,7 @@ function printHelp(): void {
   console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
   console.log(`  ${pc.cyan('auth <load|save|clear>')} Manage Playwright storageState (cookies, localStorage)`);
   console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth)`);
+  console.log(`  ${pc.cyan('clean [dir]')}            Clean/reset output directory & clear session pages (${pc.dim('alias: reset')})`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
   console.log(`  ${pc.cyan('exit')}                   Close browser and exit REPL\n`);
 }
