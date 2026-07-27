@@ -1,5 +1,9 @@
 # Dasyu (दस्यु)
 
+<p align="center">
+  <img src="./assets/dasyu-logo-raybans.jpg" alt="Dasyu — The Outlaw of the Web" width="360" />
+</p>
+
 > *The Outlaw of the Web.* A modern TypeScript/Node.js utility powered by Playwright to crawl web applications up to $N$ levels deep, capture full-page DOM screenshots, and extract clean Markdown content.
 
 In Vedic Sanskrit, a **Dasyu** (दस्यु) was a fierce non-conformist, rover, or outlaw who refused to submit to orthodox rules. **Dasyu** roams the information superhighway, bypassing fluff, capturing visual snapshots in time, and extracting raw content treasure.
