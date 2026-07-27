@@ -41,6 +41,9 @@ npx dasyu crawl https://example.com --output ./results
 # Crawl 3 levels deep, generating full-page screenshots AND clean Markdown content reports
 npx dasyu crawl https://example.com --depth 3 --content --output ./results
 
+# Crawl an authenticated web app or dashboard using saved Playwright storageState cookies & localStorage
+npx dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+
 # Specify concurrency limit (default is 3 parallel pages)
 npx dasyu crawl https://example.com --depth 2 --concurrency 5 --content
 ```
@@ -99,6 +102,23 @@ Inside the `dasyu> ` prompt:
 - `auth <load|save|clear>` — Dynamically manage Playwright authentication storageState (cookies & localStorage).
 - `config [key] [val]` — Views or live-updates crawler settings (concurrency, depth, outputDir, auth).
 - `clear` — Clears screen and prints the version banner.
+
+Example REPL session with authentication:
+```bash
+dasyu> auth load ./my-cookies.json
+✔ Loaded authentication storageState from "./my-cookies.json" for subsequent crawls
+
+dasyu> config
+Current Session Configuration:
+  depth:          1 (max: 5)
+  concurrency:    3 pages
+  output:         ./output
+  content:        enabled
+  allow-external: disabled
+  auth (storage): ./my-cookies.json
+
+dasyu> crawl https://app.example.com/settings --depth 2
+```
 
 *Note on SPAs*: Dasyu automatically waits for network idle (`networkidle`) and client-side rendering before capturing snapshots, ensuring Angular (`domtree.io`), React, and Vue applications render completely!
 
