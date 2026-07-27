@@ -1,7 +1,7 @@
 # Dasyu (दस्यु)
 
 <p align="center">
-  <img src="./assets/dasyu.png" alt="Dasyu — The Outlaw of the Web" width="400" />
+  <img src="./assets/dasyu-black.png" alt="Dasyu — The Outlaw of the Web" width="400" />
 </p>
 
 > *The Outlaw of the Web.* A modern TypeScript/Node.js utility powered by Playwright to crawl web applications up to $N$ levels deep, capture full-page DOM screenshots, and extract clean Markdown content.

@@ -25,10 +25,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
   const sessionPages: PageData[] = [];
 
-  console.log(pc.bold(logger.tomato(`\n⚔  DASYU (दस्यु) v${pkg.version} — Interactive Web Snapshot REPL ⚔`)));
-  console.log(pc.dim('The Outlaw of the Web. Roam links, capture snapshots, extract treasure.\n'));
-  console.log(`Type ${pc.cyan('help')} to see available commands or ${pc.cyan('exit')} to leave.\n`);
-  printConfig(options);
+  printBanner(options);
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -266,6 +263,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
         case 'clear':
         case 'cls':
           console.clear();
+          printBanner(options);
           break;
 
         case 'exit':
@@ -315,4 +313,30 @@ function printConfig(opts: CrawlOptions): void {
   console.log(`  ${pc.bold('content')}:        ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}`);
   console.log(`  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}`);
   console.log(`  ${pc.bold('auth (storage)')}: ${opts.storageState ? pc.cyan(String(opts.storageState)) : pc.dim('none')}\n`);
+}
+
+function printBanner(opts: CrawlOptions): void {
+  const v = pkg.version;
+  const c = pc.dim('Current Session Configuration:');
+  const d = `  ${pc.bold('depth')}:          ${opts.maxDepth} (max: 5)`;
+  const conc = `  ${pc.bold('concurrency')}:    ${opts.concurrency} pages`;
+  const out = `  ${pc.bold('output')}:         ${opts.outputDir}`;
+  const cont = `  ${pc.bold('content')}:        ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}`;
+  const ext = `  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}`;
+  const auth = `  ${pc.bold('auth (storage)')}: ${opts.storageState ? pc.cyan(String(opts.storageState)) : pc.dim('none')}`;
+
+  console.log('');
+  console.log(`${pc.bold('  ████████████')}    ${pc.bold(logger.tomato(`⚔  DASYU (दस्यु) v${v} — Interactive Web Snapshot REPL ⚔`))}`);
+  console.log(`${pc.bold('              ')}    ${pc.dim('The Outlaw of the Web. Roam links, capture snapshots, extract treasure.')}`);
+  console.log(`${pc.bold('  ██        ██')}    `);
+  console.log(`${pc.bold('              ')}    Type ${pc.cyan('help')} to see available commands or ${pc.cyan('exit')} to leave.`);
+  console.log(`${pc.bold('  ██        ██')}    `);
+  console.log(`${pc.bold('              ')}    ${c}`);
+  console.log(`${pc.bold('  ██        ██')}    ${d}`);
+  console.log(`${pc.bold('              ')}    ${conc}`);
+  console.log(`${pc.bold(logger.tomato('  ████████████'))}    ${out}`);
+  console.log(`${pc.bold('              ')}    ${cont}`);
+  console.log(`${pc.bold(logger.tomato('  ████████████'))}    ${ext}`);
+  console.log(`${pc.bold('              ')}    ${auth}`);
+  console.log('');
 }
