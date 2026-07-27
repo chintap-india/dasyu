@@ -111,14 +111,26 @@ export async function captureScreenshot(
   try {
     await page.evaluate(async () => {
       await new Promise<void>((resolve) => {
+        // Find the primary scrollable element (e.g. Angular mat-sidenav-content, React root, or window)
+        const maxEl = Array.from(document.querySelectorAll('*')).reduce(
+          (a, b) => (a.scrollHeight > b.scrollHeight ? a : b),
+          document.documentElement
+        );
+        const isCustomScroll = maxEl && maxEl.scrollHeight > (document.documentElement?.clientHeight || 0) + 100 && maxEl !== document.documentElement && maxEl !== document.body;
+
         let totalHeight = 0;
         const distance = 600;
         const timer = setInterval(() => {
-          const scrollHeight = document.body?.scrollHeight || document.documentElement?.scrollHeight || 0;
-          window.scrollBy(0, distance);
+          const scrollHeight = isCustomScroll ? maxEl.scrollHeight : (document.body?.scrollHeight || document.documentElement?.scrollHeight || 0);
+          if (isCustomScroll) {
+            maxEl.scrollBy(0, distance);
+          } else {
+            window.scrollBy(0, distance);
+          }
           totalHeight += distance;
           if (totalHeight >= scrollHeight || totalHeight > 15000) {
             clearInterval(timer);
+            if (isCustomScroll) maxEl.scrollTo(0, 0);
             window.scrollTo(0, 0);
             resolve();
           }
@@ -126,6 +138,36 @@ export async function captureScreenshot(
       });
     });
     await page.waitForTimeout(500); // Allow layout animations to settle after scrolling back up
+
+    // Prepare DOM for full-page screenshot: expand fixed/overflowing SPA layout containers so fullPage captures everything
+    await page.evaluate(() => {
+      const maxScrollH = Math.max(...Array.from(document.querySelectorAll('*')).map(e => e.scrollHeight));
+      if (maxScrollH > (document.documentElement?.clientHeight || 0) + 50) {
+        document.querySelectorAll('*').forEach(el => {
+          if (el.scrollHeight > el.clientHeight + 20 || el.scrollHeight >= maxScrollH - 50) {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.style) {
+              const style = window.getComputedStyle(htmlEl);
+              if (style.overflow !== 'visible' || style.height !== 'auto' || style.maxHeight !== 'none') {
+                htmlEl.style.setProperty('height', 'auto', 'important');
+                htmlEl.style.setProperty('max-height', 'none', 'important');
+                htmlEl.style.setProperty('overflow', 'visible', 'important');
+                htmlEl.style.setProperty('overflow-y', 'visible', 'important');
+              }
+            }
+          }
+        });
+        if (document.documentElement) {
+          document.documentElement.style.setProperty('height', 'auto', 'important');
+          document.documentElement.style.setProperty('overflow', 'visible', 'important');
+        }
+        if (document.body) {
+          document.body.style.setProperty('height', 'auto', 'important');
+          document.body.style.setProperty('overflow', 'visible', 'important');
+        }
+      }
+    });
+    await page.waitForTimeout(300);
   } catch {
     // Ignore evaluation errors if page closed or restricted
   }
@@ -133,6 +175,7 @@ export async function captureScreenshot(
   await page.screenshot({
     path: filePath,
     fullPage: true,
+    animations: 'disabled',
     type: 'png',
   });
 
