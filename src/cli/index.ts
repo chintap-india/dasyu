@@ -165,7 +165,7 @@ export async function main(): Promise<void> {
       const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
       const outDir = opts.output || './output';
 
-      logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
+      logger.header(`Dasyu (दस्यु) v${pkg.version} — The Outlaw of the Web — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
       const plugins = [];
       if (opts.detectAuth) {

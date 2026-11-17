@@ -386,7 +386,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 }
 
 function printHelp(): void {
-  logger.header('Dasyu REPL Commands');
+  logger.header('Dasyu (दस्यु) — The Outlaw of the Web — REPL Commands');
   console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N`);
   console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, -s/--auth <path>, --content, --allow-external')}`);
   console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
@@ -419,7 +419,8 @@ function printConfig(opts: CrawlOptions): void {
 function printBanner(opts: CrawlOptions): void {
   const v = pkg.version;
   console.log('');
-  console.log(`  ${pc.bold(logger.tomato(`⚔  DASYU (दस्यु) v${v}`))}  ${pc.dim('— The Outlaw of the Web')}`);
+  console.log(`  ${pc.bold(logger.tomato(`⚔  DASYU (दस्यु) v${v} — Interactive Web Snapshot REPL ⚔`))}`);
+  console.log(`  ${pc.bold(logger.tomato('The Outlaw of the Web.'))} ${logger.tomato('Roam links, capture snapshots, extract treasure.')}`);
   console.log(`  ${pc.dim('🌐 Web: ')}${pc.cyan('https://chintap.com/dasyu')}  ${pc.dim('• GitHub: ')}${pc.cyan('https://github.com/chintap-india/dasyu')}`);
   console.log(`  ${pc.dim('Type')} ${pc.cyan('help')} ${pc.dim('to see available commands or')} ${pc.cyan('exit')} ${pc.dim('to leave.')}\n`);
   printConfig(opts);

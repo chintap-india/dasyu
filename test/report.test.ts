@@ -57,6 +57,7 @@ describe('HTML Visual Report Generator', () => {
     const htmlContent = await fs.readFile(reportPath, 'utf-8');
 
     // Check header and branding
+    expect(htmlContent).toContain('The Outlaw of the Web');
     expect(htmlContent).toContain('Dasyu Crawl Report');
     expect(htmlContent).toContain('chintap.com');
     expect(htmlContent).toContain('Automated Crawl &amp; Audit Report');

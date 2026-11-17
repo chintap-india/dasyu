@@ -187,7 +187,7 @@ export async function generateHtmlReport(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dasyu Crawl Report — ${escapeHtml(hostname)}</title>
+  <title>Dasyu (दस्यु) — The Outlaw of the Web — Dasyu Crawl Report | ${escapeHtml(hostname)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -611,7 +611,7 @@ export async function generateHtmlReport(
       </svg>
       <div>
         <div class="brand-title">dasyu <span class="red">दस्यु</span></div>
-        <div class="brand-subtitle">Automated Crawl &amp; Audit Report</div>
+        <div class="brand-subtitle"><span class="red">The Outlaw of the Web</span> • Automated Crawl &amp; Audit Report</div>
       </div>
     </div>
 
@@ -688,7 +688,7 @@ export async function generateHtmlReport(
     <div class="footer-brand">
       chin<span class="red">tap</span>
     </div>
-    <div>THINGS. APPS. POSSIBILITIES. • <a href="https://chintap.com/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">chintap.com/dasyu</a> • <a href="https://github.com/chintap-india/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">GitHub</a></div>
+    <div>THINGS. APPS. POSSIBILITIES. • <span class="red">The Outlaw of the Web</span> • <a href="https://chintap.com/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">chintap.com/dasyu</a> • <a href="https://github.com/chintap-india/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">GitHub</a></div>
   </footer>
 
   <script>
