@@ -22,22 +22,41 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 
 ## 🚀 Installation & Setup (Local Beta)
 
-> **Note:** Official NPM registry publishing is held in our Roadmap until beta testing completes. For now, install and run Dasyu directly from the cloned repository!
+> **Note:** Official NPM registry publishing is held on our Roadmap while we dogfood Dasyu internally. For now, install and run Dasyu directly from the cloned repository!
+
+### Quick Start (Global CLI Link)
 
 ```bash
-# Clone the repository
+# 1. Clone the repository (or navigate to your local dasyu folder)
 git clone https://github.com/001bharathchetty/dasyu.git
 cd dasyu
 
-# Install dependencies and compile TypeScript
+# 2. Install dependencies & compile TypeScript
 npm install
 npm run build
 
-# Link globally (optional) to use the `dasyu` command everywhere
-npm link
+# 3. Ensure Playwright browser binaries are ready
+npx playwright install chromium
 
-# Or run directly via Node:
-node bin/dasyu.js --help
+# 4. Link globally so `dasyu` and `dasyu-mcp` are available in any terminal:
+npm link
+```
+
+Once linked, test your global installation anywhere:
+```bash
+dasyu --version
+dasyu --help
+```
+
+### Running Locally Without Linking
+
+If you prefer not to link globally, you can invoke the binaries directly:
+```bash
+# Run Dasyu CLI directly via Node
+node ./bin/dasyu.js --help
+
+# Run Dasyu MCP Server directly
+node ./bin/dasyu-mcp.js
 ```
 
 ---
