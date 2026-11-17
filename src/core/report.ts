@@ -604,10 +604,10 @@ export async function generateHtmlReport(
 
   <header>
     <div class="brand-group">
-      <svg class="emblem-svg" viewBox="0 0 659 628" fill="none">
-        <polygon points="16,17 230,17 16,107" fill="#FFFFFF" />
-        <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
-        <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#FFFFFF" />
+      <svg class="emblem-svg" viewBox="0 0 1000 1000" fill="none">
+        <polygon points="80,80 360,80 80,220" fill="#FFFFFF" />
+        <polygon points="80,220 360,80 760,80 960,280 80,520" fill="#F00000" />
+        <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#FFFFFF" />
       </svg>
       <div>
         <div class="brand-title">dasyu <span class="red">दस्यु</span></div>

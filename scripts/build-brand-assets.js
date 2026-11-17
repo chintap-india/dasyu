@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const pkg = require('../package.json');
 
 const rootDir = path.resolve(__dirname, '..');
 const assetsDir = path.join(rootDir, 'assets');
@@ -28,57 +29,57 @@ console.log('   Working Dir:', tmpDir);
 // -----------------------------------------------------------------------------
 
 // Dark Emblem: Black body with vivid Crimson Red slash on transparent background
-const EMBLEM_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 659 628" width="100%" height="100%" fill="none">
+const EMBLEM_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" fill="none">
   <!-- Dasyu Master Emblem (Dark Mode): The Outlaw of the Web -->
-  <polygon points="16,17 230,17 16,107" fill="#0A0A0A" />
-  <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
-  <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#0A0A0A" />
+  <polygon points="80,80 360,80 80,220" fill="#0A0A0A" />
+  <polygon points="80,220 360,80 760,80 960,280 80,520" fill="#F00000" />
+  <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#0A0A0A" />
 </svg>`;
 
 // Light Emblem: Crisp White body with vivid Crimson Red slash on transparent background
-const EMBLEM_LIGHT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 659 628" width="100%" height="100%" fill="none">
+const EMBLEM_LIGHT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" fill="none">
   <!-- Dasyu Master Emblem (Light Mode for Dark Backgrounds) -->
-  <polygon points="16,17 230,17 16,107" fill="#FFFFFF" />
-  <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
-  <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#FFFFFF" />
+  <polygon points="80,80 360,80 80,220" fill="#FFFFFF" />
+  <polygon points="80,220 360,80 760,80 960,280 80,520" fill="#F00000" />
+  <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#FFFFFF" />
 </svg>`;
 
 // Adaptive Base Emblem (Dark default)
-const EMBLEM_ADAPTIVE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 659 628" width="100%" height="100%" fill="none">
+const EMBLEM_ADAPTIVE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" fill="none">
   <style>
     .emblem-body { fill: #0A0A0A; }
-    .emblem-slash { fill: #EA1C24; }
+    .emblem-slash { fill: #F00000; }
     @media (prefers-color-scheme: dark) {
       .emblem-body { fill: #FFFFFF; }
     }
   </style>
-  <polygon class="emblem-body" points="16,17 230,17 16,107" />
-  <polygon class="emblem-slash" points="16,107 230,17 480,17 638,155 16,327" />
-  <polygon class="emblem-body" points="16,327 638,155 638,471 498,609 16,609" />
+  <polygon class="emblem-body" points="80,80 360,80 80,220" />
+  <polygon class="emblem-slash" points="80,220 360,80 760,80 960,280 80,520" />
+  <polygon class="emblem-body" points="80,520 960,280 960,720 760,920 80,920" />
 </svg>`;
 
 // Horizontal Brand Logo (Dark Mode background)
 const LOGO_HORIZONTAL_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%" fill="none">
-  <g transform="translate(60, 45) scale(0.5)">
-    <polygon points="16,17 230,17 16,107" fill="#FFFFFF" />
-    <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
-    <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#FFFFFF" />
+  <g transform="translate(40, 40) scale(0.32)">
+    <polygon points="80,80 360,80 80,220" fill="#FFFFFF" />
+    <polygon points="80,220 360,80 760,80 960,280 80,520" fill="#F00000" />
+    <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#FFFFFF" />
   </g>
-  <text x="440" y="200" font-family="'Poppins', -apple-system, sans-serif" font-size="128" font-weight="900" fill="#FFFFFF" letter-spacing="-3">dasyu</text>
-  <text x="825" y="150" font-family="'Inter', -apple-system, sans-serif" font-size="34" font-weight="800" fill="#EA1C24" letter-spacing="1">दस्यु</text>
-  <text x="445" y="260" font-family="'Space Grotesk', monospace" font-size="28" font-weight="700" fill="#9AA5B5" letter-spacing="6">THE OUTLAW OF THE WEB</text>
+  <text x="400" y="200" font-family="'Poppins', -apple-system, sans-serif" font-size="128" font-weight="900" fill="#FFFFFF" letter-spacing="-3">dasyu</text>
+  <text x="785" y="150" font-family="'Inter', -apple-system, sans-serif" font-size="34" font-weight="800" fill="#F00000" letter-spacing="1">दस्यु</text>
+  <text x="405" y="260" font-family="'Space Grotesk', monospace" font-size="28" font-weight="700" fill="#9AA5B5" letter-spacing="6">THE OUTLAW OF THE WEB</text>
 </svg>`;
 
 // Horizontal Brand Logo (Light Mode background)
 const LOGO_HORIZONTAL_LIGHT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%" fill="none">
-  <g transform="translate(60, 45) scale(0.5)">
-    <polygon points="16,17 230,17 16,107" fill="#0A0A0A" />
-    <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
-    <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#0A0A0A" />
+  <g transform="translate(40, 40) scale(0.32)">
+    <polygon points="80,80 360,80 80,220" fill="#0A0A0A" />
+    <polygon points="80,220 360,80 760,80 960,280 80,520" fill="#F00000" />
+    <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#0A0A0A" />
   </g>
-  <text x="440" y="200" font-family="'Poppins', -apple-system, sans-serif" font-size="128" font-weight="900" fill="#0A0A0A" letter-spacing="-3">dasyu</text>
-  <text x="825" y="150" font-family="'Inter', -apple-system, sans-serif" font-size="34" font-weight="800" fill="#EA1C24" letter-spacing="1">दस्यु</text>
-  <text x="445" y="260" font-family="'Space Grotesk', monospace" font-size="28" font-weight="700" fill="#4B5563" letter-spacing="6">THE OUTLAW OF THE WEB</text>
+  <text x="400" y="200" font-family="'Poppins', -apple-system, sans-serif" font-size="128" font-weight="900" fill="#0A0A0A" letter-spacing="-3">dasyu</text>
+  <text x="785" y="150" font-family="'Inter', -apple-system, sans-serif" font-size="34" font-weight="800" fill="#F00000" letter-spacing="1">दस्यु</text>
+  <text x="405" y="260" font-family="'Space Grotesk', monospace" font-size="28" font-weight="700" fill="#4B5563" letter-spacing="6">THE OUTLAW OF THE WEB</text>
 </svg>`;
 
 // Write master SVG files
@@ -755,10 +756,10 @@ const renderHtmlOgCard = `<!DOCTYPE html>
         <h1 class="app-title">Dasyu</h1>
         <span class="title-indic">दस्यु</span>
         <span class="tag-badge">Headless Engine</span>
-        <span class="pill-invite">v0.2.0 • MCP Native</span>
+        <span class="pill-invite">v\${pkg.version} • MCP Native</span>
       </div>
 
-      <p class="tagline">The Outlaw of the Web — CLI, REPL &amp; Headless Browser Automation</p>
+      <p class="tagline">The Outlaw of the Web. Roam links, capture snapshots, extract treasure.</p>
 
       <div class="features-row">
         <div class="feature-chip"><span class="dot"></span>Playwright Chromium</div>
@@ -782,7 +783,7 @@ const renderHtmlOgCard = `<!DOCTYPE html>
 
     <div class="url-badge">
       <span class="url-dot"></span>
-      <span>dasyu.chintap.com</span>
+      <span>chintap.com/dasyu</span>
     </div>
   </footer>
 </body>
