@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { BrowserManager } from '../core/browser';
+import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
 import type { CrawlOptions, PageData } from '../core/types';
 import { logger } from './logger';
 import { captureScreenshot } from '../extractors/screenshot';
@@ -241,7 +242,53 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
         case 'storage-state': {
           const sub = args[0]?.toLowerCase();
           const p = args[1] || args[0];
-          if (sub === 'save') {
+          if (sub === 'login') {
+            const url = args[1];
+            const targetPath = args[2] || './auth.json';
+            if (!url) {
+              logger.error('Please specify a URL to log in: auth login <url> [output.json]');
+            } else {
+              try {
+                logger.info(`Launching interactive browser for ${pc.cyan(url)}...`);
+                const result = await interactiveLogin({ url, outputPath: targetPath });
+                options.storageState = result.storageStatePath;
+                await browserManager.setStorageState(result.storageStatePath);
+                logger.success(`✔ Logged in and saved session to ${pc.cyan(result.storageStatePath)}!`);
+                logger.info(`Session is now active for subsequent crawls in this REPL.`);
+              } catch (err: any) {
+                logger.error(`Interactive login failed: ${err?.message || String(err)}`);
+              }
+            }
+          } else if (sub === 'inspect' || sub === 'check') {
+            const targetPath = args[1] || (typeof options.storageState === 'string' ? options.storageState : './auth.json');
+            try {
+              const stats = await inspectStorageState(targetPath);
+              logger.header(`Auth Session Details: ${targetPath}`);
+              console.log(`  🍪 Cookies:  ${pc.bold(stats.cookiesCount.toString())}`);
+              console.log(`  🌐 Domains:  ${stats.domains.join(', ') || 'none'}`);
+              console.log(`  🔑 Origins:  ${pc.bold(stats.originsCount.toString())}`);
+              if (stats.expiredCookies > 0) {
+                logger.warn(`  ⚠️  Expired cookies: ${stats.expiredCookies}`);
+              }
+            } catch (err: any) {
+              logger.error(`Could not inspect ${targetPath}: ${err?.message || String(err)}`);
+            }
+          } else if (sub === 'import') {
+            const inputPath = args[1];
+            const targetPath = args[2] || './auth.json';
+            if (!inputPath) {
+              logger.error('Please specify a session file to import: auth import <input.json> [output.json]');
+            } else {
+              try {
+                const result = await importBrowseSession(inputPath, targetPath);
+                options.storageState = result.storageStatePath;
+                await browserManager.setStorageState(result.storageStatePath);
+                logger.success(`✔ Imported session from "${inputPath}" to ${pc.cyan(result.storageStatePath)}`);
+              } catch (err: any) {
+                logger.error(`Failed to import session: ${err?.message || String(err)}`);
+              }
+            }
+          } else if (sub === 'save') {
             const targetPath = args[1] || './auth.json';
             await browserManager.saveStorageState(targetPath);
             logger.success(`Saved browser authentication state (cookies, localStorage) to ${targetPath}`);
@@ -256,7 +303,13 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             logger.success('Cleared authentication storageState');
           } else {
             logger.info(`Current auth storageState: ${options.storageState || pc.dim('none')}`);
-            logger.info('Usage: auth load <path.json> | auth save <path.json> | auth clear');
+            logger.info('Usage: auth <login|inspect|import|load|save|clear>');
+            console.log(`  auth login <url> [file]    Launch browser to log in (SSO/2FA) and save session`);
+            console.log(`  auth inspect [file]        Inspect cookies and domains in storageState JSON`);
+            console.log(`  auth import <input> [file] Import OpenCode Browse / external cookies`);
+            console.log(`  auth load <file>           Load existing storageState JSON`);
+            console.log(`  auth save [file]           Save current cookies/localStorage to file`);
+            console.log(`  auth clear                 Clear authentication session`);
           }
           break;
         }
@@ -315,7 +368,13 @@ function printHelp(): void {
   console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
   console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session`);
   console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
-  console.log(`  ${pc.cyan('auth <load|save|clear>')} Manage Playwright storageState (cookies, localStorage)`);
+  console.log(`  ${pc.cyan('auth <cmd> [args]')}      Authentication & session management:`);
+  console.log(`    ${pc.dim('auth login <url> [file]  — Open browser to log in (SSO/2FA) and save session')}`);
+  console.log(`    ${pc.dim('auth inspect [file]      — Inspect cookies and domains in storageState')}`);
+  console.log(`    ${pc.dim('auth import <in> [file]  — Import OpenCode Browse / external cookies')}`);
+  console.log(`    ${pc.dim('auth load <file>         — Load existing storageState JSON file')}`);
+  console.log(`    ${pc.dim('auth save [file]         — Save current session cookies to file')}`);
+  console.log(`    ${pc.dim('auth clear               — Clear active authentication session')}`);
   console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth)`);
   console.log(`  ${pc.cyan('clean [dir]')}            Clean/reset output directory & clear session pages (${pc.dim('alias: reset')})`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);

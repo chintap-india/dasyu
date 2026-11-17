@@ -78,24 +78,50 @@ dasyu clean ./my-snapshots
 
 ---
 
-## 🔐 Authenticated Crawling (`storageState`)
+## 🔐 Authenticated Crawling & Interactive Auth Bridge
 
-Dasyu natively integrates Playwright's **`storageState`** feature, enabling developers to automatically crawl authenticated web applications, dashboards, admin panels, and user profiles without needing to script login flows!
+Dasyu provides an **Interactive Auth Bridge** and native Playwright **`storageState`** integration. You can easily log in to authenticated web applications, dashboards, admin panels, and SSO portals directly through an interactive browser window without scripting complex login flows!
 
-Simply pass a saved Playwright `storageState` JSON file containing cookies and `localStorage`:
+### 1. Interactive Headful Login (`auth login`)
+Launch a real browser window, sign in, solve Multi-Factor Authentication (2FA/SSO), and Dasyu will automatically capture and persist the active session cookies & `localStorage`:
+
 ```bash
-# Via CLI using -s / --storage-state (or --auth)
+# Open interactive login window and save session to ./auth.json
+dasyu auth login https://app.example.com/login
+
+# Or specify a custom output path
+dasyu auth login https://app.example.com/login -o ./my-session.json
+
+# Now crawl the authenticated dashboard with your saved state
 dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
 ```
 
-In the interactive REPL, you can dynamically load, save, or clear authentication states on the fly:
-```bash
-dasyu> auth load ./my-cookies.json
-✔ Loaded authentication storageState from "./my-cookies.json" for subsequent crawls
+### 2. Session Inspection & External Import (OpenCode Browse / Chrome)
+Easily inspect existing auth tokens or import cookies exported from OpenCode Browse (`anomalyco/browse`) or Chrome DevTools:
 
-dasyu> crawl https://app.example.com/settings 2
-# Or save your current session's auth state for future use:
-dasyu> auth save ./saved-session.json
+```bash
+# Inspect cookies, active domains, and expiration dates
+dasyu auth inspect ./auth.json
+
+# Import cookies or raw session dumps from OpenCode Browse / DevTools into standard storageState
+dasyu auth import ./browse-cookies.json -o ./auth.json
+```
+
+### 3. Anomalyco Browse Plugin (`--detect-auth`)
+Enable the built-in **Anomalyco Browse Plugin** to monitor and alert on login walls, HTTP 401/403 status codes, and SSO redirects during autonomous crawls:
+
+```bash
+dasyu crawl https://app.example.com --auth ./auth.json --detect-auth
+```
+
+In the interactive REPL, you can run all auth commands on the fly:
+```bash
+dasyu> auth login https://app.example.com/login
+✔ Logged in and saved session to "./auth.json"!
+Session is now active for subsequent crawls in this REPL.
+
+dasyu> auth inspect ./auth.json
+dasyu> crawl https://app.example.com/settings --depth 2
 ```
 
 ---

@@ -2,6 +2,8 @@ import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
+import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
+import { createBrowsePlugin } from '../plugins/browse';
 import { startRepl } from './repl';
 import { logger } from './logger';
 import pkg from '../../package.json';
@@ -58,6 +60,66 @@ export async function main(): Promise<void> {
       });
     });
 
+  const authCmd = program
+    .command('auth')
+    .description('Interactive authentication and storageState session management');
+
+  authCmd
+    .command('login <url>')
+    .description('Launch an interactive browser to log in, complete SSO/2FA, and save storageState')
+    .option('-o, --output <path>', 'Destination file path for storageState JSON', './auth.json')
+    .option('--channel <channel>', 'Browser channel (e.g. chrome, msedge)')
+    .action(async (url, opts) => {
+      try {
+        const result = await interactiveLogin({
+          url,
+          outputPath: opts.output,
+          channel: opts.channel,
+        });
+        logger.success(`\n✔ Saved authentication storageState to: ${pc.cyan(result.storageStatePath)}`);
+        logger.info(`Now crawl using: ${pc.bold(`dasyu crawl ${url} --auth ${opts.output}`)}\n`);
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Interactive login failed: ${err?.message || String(err)}`);
+        process.exit(1);
+      }
+    });
+
+  authCmd
+    .command('inspect <path>')
+    .description('Inspect cookies, origins, and domains in an existing storageState JSON file')
+    .action(async (pathStr) => {
+      try {
+        const stats = await inspectStorageState(pathStr);
+        logger.header(`Auth Session Details: ${pathStr}`);
+        console.log(`  🍪 Cookies:  ${pc.bold(stats.cookiesCount.toString())}`);
+        console.log(`  🌐 Domains:  ${stats.domains.join(', ') || 'none'}`);
+        console.log(`  🔑 Origins:  ${pc.bold(stats.originsCount.toString())}`);
+        if (stats.expiredCookies > 0) {
+          logger.warn(`  ⚠️  Expired cookies: ${stats.expiredCookies}`);
+        }
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Failed to inspect storageState: ${err?.message || String(err)}`);
+        process.exit(1);
+      }
+    });
+
+  authCmd
+    .command('import <input>')
+    .description('Import OpenCode Browse / external browser cookies or session JSON')
+    .option('-o, --output <path>', 'Output destination for normalized storageState JSON', './auth.json')
+    .action(async (inputPath, opts) => {
+      try {
+        const result = await importBrowseSession(inputPath, opts.output);
+        logger.success(`✔ Successfully imported session to ${pc.cyan(result.storageStatePath)}`);
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Failed to import session: ${err?.message || String(err)}`);
+        process.exit(1);
+      }
+    });
+
   program
     .command('crawl <url>')
     .description('Crawl a URL up to N levels deep, taking snapshots and extracting content')
@@ -68,12 +130,18 @@ export async function main(): Promise<void> {
     .option('--auth <path>', 'Alias for --storage-state')
     .option('--content', 'Extract markdown content and JSON metadata', false)
     .option('--allow-external', 'Allow crawling external domains', false)
+    .option('--detect-auth', 'Enable Anomalyco Browse plugin to monitor and alert on auth walls', false)
     .action(async (url, opts) => {
       const depth = parseInt(opts.depth, 10) || 1;
       const concurrency = parseInt(opts.concurrency, 10) || 3;
       const storageState = opts.storageState || opts.auth;
 
       logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
+
+      const plugins = [];
+      if (opts.detectAuth) {
+        plugins.push(createBrowsePlugin({ sessionState: storageState }));
+      }
 
       const crawler = new DasyuCrawler({
         startUrl: url,
@@ -83,6 +151,7 @@ export async function main(): Promise<void> {
         extractContent: Boolean(opts.content),
         allowExternal: Boolean(opts.allowExternal),
         storageState,
+        plugins,
       });
 
       try {
