@@ -33,6 +33,19 @@ export async function extractPageContent(
       text: (h.textContent || '').trim(),
     }));
 
+    const links = Array.from(document.querySelectorAll('a[href]'))
+      .map((a) => {
+        const el = a as HTMLAnchorElement;
+        return {
+          href: el.href,
+          rawHref: el.getAttribute('href') || '',
+          text: (el.textContent || '').trim().replace(/\s+/g, ' '),
+          target: el.getAttribute('target') || undefined,
+          rel: el.getAttribute('rel') || undefined,
+        };
+      })
+      .filter((l) => Boolean(l.href) && !l.href.startsWith('javascript:'));
+
     // Clone body and remove noisy tags for clean text extraction
     const clone = document.body ? (document.body.cloneNode(true) as HTMLElement) : document.documentElement;
     const noisyTags = ['script', 'style', 'noscript', 'iframe', 'svg', 'canvas'];
@@ -51,6 +64,7 @@ export async function extractPageContent(
         ogImage: getMeta('og:image'),
         canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '',
         headings,
+        links,
         extractedAt: new Date().toISOString(),
       },
     };

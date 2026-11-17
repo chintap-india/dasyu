@@ -53,6 +53,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
       switch (cmd.toLowerCase()) {
         case 'help':
         case '?':
+          printBanner(options);
           printHelp();
           break;
 
@@ -387,11 +388,13 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
 function printHelp(): void {
   logger.header('Dasyu (दस्यु) — The Outlaw of the Web — REPL Commands');
-  console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N`);
+  console.log(`  ${pc.cyan('help')}                   Display interactive REPL welcome banner and active session configuration`);
+  console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N (BFS)`);
   console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, -s/--auth <path>, --content, --allow-external')}`);
-  console.log(`  ${pc.cyan('goto <url>')}             Snap a single page screenshot and extract content`);
-  console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session`);
-  console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata & paths for page #num`);
+  console.log(`  ${pc.cyan('goto <url>')}             Navigate to a single page, snap full screenshot and extract content`);
+  console.log(`  ${pc.cyan('snap <url>')}             Alias for goto: capture instant snapshot of URL`);
+  console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session (alias: ls)`);
+  console.log(`  ${pc.cyan('inspect <num>')}          Show full metadata, links & paths for page #num (alias: i)`);
   console.log(`  ${pc.cyan('auth <cmd> [args]')}      Authentication & session management:`);
   console.log(`    ${pc.dim('auth login <url> [file]  — Open browser to log in (SSO/2FA) and save session')}`);
   console.log(`    ${pc.dim('auth inspect [file]      — Inspect cookies and domains in storageState')}`);

@@ -8,11 +8,14 @@ export interface SiteGraphNode {
   title: string;
   depth: number;
   status: number;
+  parentUrl?: string;
 }
 
 export interface SiteGraphEdge {
   source: string;
   target: string;
+  anchorText?: string;
+  targetAttr?: string;
 }
 
 export interface SiteGraph {
@@ -41,6 +44,7 @@ export async function exportSiteGraph(
       title: p.title || p.url,
       depth: p.depth,
       status: p.status,
+      parentUrl: p.parentUrl,
     });
   });
 
@@ -48,13 +52,28 @@ export async function exportSiteGraph(
     const sourceId = urlToId.get(page.url);
     if (!sourceId) continue;
 
+    const linkDetailsMap = new Map<string, { text?: string; target?: string }>();
+    if (page.linkDetails) {
+      for (const ld of page.linkDetails) {
+        if (!linkDetailsMap.has(ld.url)) {
+          linkDetailsMap.set(ld.url, { text: ld.text, target: ld.target });
+        }
+      }
+    }
+
     for (const link of page.links) {
       const targetId = urlToId.get(link);
       if (targetId && sourceId !== targetId) {
         const edgeKey = `${sourceId}->${targetId}`;
         if (!visitedEdges.has(edgeKey)) {
           visitedEdges.add(edgeKey);
-          edges.push({ source: sourceId, target: targetId });
+          const meta = linkDetailsMap.get(link);
+          edges.push({
+            source: sourceId,
+            target: targetId,
+            anchorText: meta?.text || undefined,
+            targetAttr: meta?.target || undefined,
+          });
         }
       }
     }
@@ -69,7 +88,8 @@ export async function exportSiteGraph(
     mermaid += `  ${n.id}["${safeTitle} (${n.depth})"]\n`;
   });
   edges.forEach((e) => {
-    mermaid += `  ${e.source} --> ${e.target}\n`;
+    const label = e.anchorText ? `|"${e.anchorText.replace(/["()[\],]/g, ' ').slice(0, 20)}"|` : '';
+    mermaid += `  ${e.source} -->${label} ${e.target}\n`;
   });
 
   const graphJsonPath = path.join(outputDir, 'site-graph.json');

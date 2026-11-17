@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import type { CrawlOptions, CrawlResult, PageContext, PageData } from './types';
+import type { CrawlOptions, CrawlResult, LinkMetadata, PageContext, PageData } from './types';
 import type { DasyuPlugin } from '../plugins/base';
 import { BrowserManager } from './browser';
 import { captureScreenshot, dismissCookieBanners } from '../extractors/screenshot';
@@ -97,7 +97,7 @@ export class DasyuCrawler {
 
     const startTime = Date.now();
     const startUrlNorm = this.normalizeUrl(this.options.startUrl);
-    const queue: { url: string; depth: number }[] = [{ url: startUrlNorm, depth: 0 }];
+    const queue: { url: string; depth: number; parentUrl?: string }[] = [{ url: startUrlNorm, depth: 0 }];
     const visited = new Set<string>();
     const pages: PageData[] = [];
     const errors: { url: string; depth: number; error: string }[] = [];
@@ -114,7 +114,7 @@ export class DasyuCrawler {
 
       const runWorker = async () => {
         while (!this.isAborted) {
-          let item: { url: string; depth: number } | undefined;
+          let item: { url: string; depth: number; parentUrl?: string } | undefined;
           while (queue.length > 0 && !this.isAborted) {
             const candidate = queue.shift()!;
             if (!visited.has(candidate.url)) {
@@ -138,7 +138,7 @@ export class DasyuCrawler {
 
           activeWorkers++;
           try {
-            const pageData = await this.processUrl(item.url, item.depth, maxDepth, queue, visited);
+            const pageData = await this.processUrl(item.url, item.depth, maxDepth, queue, visited, item.parentUrl);
             pages.push(pageData);
             onProgress?.(pageData, pages.length + errors.length, queue.length);
           } catch (err: any) {
@@ -147,9 +147,11 @@ export class DasyuCrawler {
             const failedPage: PageData = {
               url: item.url,
               depth: item.depth,
+              parentUrl: item.parentUrl,
               title: 'Error',
               status: 0,
               links: [],
+              linkDetails: [],
               error: errorMsg,
             };
             pages.push(failedPage);
@@ -195,17 +197,20 @@ export class DasyuCrawler {
     url: string,
     depth: number,
     maxDepth: number,
-    queue: { url: string; depth: number }[],
-    visited: Set<string>
+    queue: { url: string; depth: number; parentUrl?: string }[],
+    visited: Set<string>,
+    parentUrl?: string
   ): Promise<PageData> {
     const page = await this.browserManager.acquirePage();
     const outputDir = this.options.outputDir!;
     const pageData: PageData = {
       url,
       depth,
+      parentUrl,
       title: '',
       status: 0,
       links: [],
+      linkDetails: [],
       metadata: {},
     };
 
@@ -241,25 +246,54 @@ export class DasyuCrawler {
 
       // 2. Extract outbound links if within depth limits
       if (depth < maxDepth) {
-        const rawLinks = await page.evaluate(() => {
-          return Array.from(document.querySelectorAll('a[href]'))
-            .map((a) => (a as HTMLAnchorElement).href)
-            .filter(Boolean);
+        const rawAnchorElements = await page.evaluate(() => {
+          return Array.from(document.querySelectorAll('a[href]')).map((a) => {
+            const anchor = a as HTMLAnchorElement;
+            return {
+              href: anchor.href,
+              rawHref: anchor.getAttribute('href') || '',
+              text: (anchor.textContent || '').trim().replace(/\s+/g, ' '),
+              target: anchor.getAttribute('target') || undefined,
+              rel: anchor.getAttribute('rel') || undefined,
+            };
+          });
         });
 
         const normalizedLinks = new Set<string>();
-        for (const raw of rawLinks) {
-          const norm = this.normalizeUrl(raw);
+        const linkDetails: LinkMetadata[] = [];
+
+        for (const raw of (rawAnchorElements || [])) {
+          const href = typeof raw === 'string' ? raw : raw?.href;
+          const rawHref = typeof raw === 'string' ? raw : raw?.rawHref || raw?.href || '';
+          const text = typeof raw === 'string' ? '' : raw?.text || '';
+          const target = typeof raw === 'string' ? undefined : raw?.target;
+          const rel = typeof raw === 'string' ? undefined : raw?.rel;
+
+          if (!href) continue;
+
+          const norm = this.normalizeUrl(href);
           if (norm && !norm.startsWith('javascript:') && !norm.startsWith('mailto:') && !norm.startsWith('tel:')) {
-            if (this.options.allowExternal || this.isSameOrigin(this.options.startUrl, norm)) {
-              normalizedLinks.add(norm);
-              if (!visited.has(norm)) {
-                queue.push({ url: norm, depth: depth + 1 });
+            const isExternal = !this.isSameOrigin(this.options.startUrl, norm);
+            if (this.options.allowExternal || !isExternal) {
+              if (!normalizedLinks.has(norm)) {
+                normalizedLinks.add(norm);
+                linkDetails.push({
+                  url: norm,
+                  rawHref,
+                  text,
+                  target,
+                  rel,
+                  isExternal,
+                });
+                if (!visited.has(norm)) {
+                  queue.push({ url: norm, depth: depth + 1, parentUrl: url });
+                }
               }
             }
           }
         }
         pageData.links = Array.from(normalizedLinks);
+        pageData.linkDetails = linkDetails;
       }
 
       // 3. Capture full-page screenshot

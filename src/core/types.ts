@@ -32,6 +32,24 @@ export interface CrawlOptions {
 }
 
 /**
+ * Structured metadata for an outbound link discovered on a web page.
+ */
+export interface LinkMetadata {
+  /** The normalized destination URL */
+  url: string;
+  /** Raw href attribute value */
+  rawHref: string;
+  /** Visible anchor text */
+  text: string;
+  /** Anchor target attribute (e.g. '_blank', '_self') */
+  target?: string;
+  /** Anchor rel attribute (e.g. 'noopener', 'noreferrer', 'nofollow') */
+  rel?: string;
+  /** Whether the link points to an external origin */
+  isExternal?: boolean;
+}
+
+/**
  * Extracted metadata and status for a single crawled web page.
  */
 export interface PageData {
@@ -39,6 +57,8 @@ export interface PageData {
   url: string;
   /** The depth level at which this page was discovered (0 = starting page) */
   depth: number;
+  /** Parent route URL that led to the discovery of this page (for parent-to-child route discovery) */
+  parentUrl?: string;
   /** The document title of the page */
   title: string;
   /** HTTP status code returned by the navigation response */
@@ -49,6 +69,8 @@ export interface PageData {
   contentPath?: string;
   /** Array of normalized outbound URLs discovered on this page */
   links: string[];
+  /** Detailed outbound link metadata including anchor text, target, and rel attributes */
+  linkDetails?: LinkMetadata[];
   /** Additional extracted page metadata (meta description, open graph tags, etc.) */
   metadata?: Record<string, any>;
   /** Error message if the navigation or processing failed */
