@@ -81,4 +81,55 @@ describe('Auth Bridge & Session Normalization', () => {
     expect(summary.domains).toHaveLength(0);
     expect(summary.expiredCookies).toBe(0);
   });
+
+  it('should inspect Netlify Identity and local-first auth storageState correctly', async () => {
+    const netlifyAuthState = {
+      cookies: [
+        {
+          name: 'nf_jwt',
+          value: 'jwt-token-sample',
+          domain: 'today.chintap.com',
+          path: '/',
+          expires: Math.floor(Date.now() / 1000) + 7200,
+        },
+      ],
+      origins: [
+        {
+          origin: 'https://today.chintap.com',
+          localStorage: [
+            {
+              name: 'chintap_auth_profile_v1',
+              value: JSON.stringify({
+                id: 'lead-dev',
+                name: 'Alex Developer',
+                role: 'developer',
+                provider: 'netlify',
+              }),
+            },
+            {
+              name: 'gotrue.user',
+              value: JSON.stringify({
+                id: 'lead-dev',
+                email: 'alex@chintap.com',
+                app_metadata: { provider: 'email', roles: ['developer'] },
+              }),
+            },
+          ],
+        },
+      ],
+    };
+
+    await fs.writeFile(tmpAuthJson, JSON.stringify(netlifyAuthState), 'utf-8');
+
+    const summary = await inspectStorageState(tmpAuthJson);
+    expect(summary.cookiesCount).toBe(1);
+    expect(summary.originsCount).toBe(1);
+    expect(summary.domains).toContain('today.chintap.com');
+    expect(summary.expiredCookies).toBe(0);
+
+    const loaded = JSON.parse(await fs.readFile(tmpAuthJson, 'utf-8'));
+    expect(loaded.origins[0].localStorage).toHaveLength(2);
+    expect(loaded.origins[0].localStorage[0].name).toBe('chintap_auth_profile_v1');
+    expect(loaded.origins[0].localStorage[1].name).toBe('gotrue.user');
+  });
 });

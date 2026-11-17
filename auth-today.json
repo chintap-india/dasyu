@@ -1,0 +1,33 @@
+{
+  "cookies": [
+    {
+      "name": "nf_jwt",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYXN5dS1kZXZlbG9wZXIiLCJlbWFpbCI6ImRhc3l1QGNoaW50YXAuY29tIiwiZXhwIjoyNTI0NjA4MDAwfQ.dasyu-simulated-token",
+      "domain": "today.chintap.com",
+      "path": "/",
+      "expires": 2524608000,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://today.chintap.com",
+      "localStorage": [
+        {
+          "name": "chintap_auth_profile_v1",
+          "value": "{\"id\":\"dasyu-member-1\",\"name\":\"Alex Developer\",\"email\":\"alex.developer@chintap.com\",\"role\":\"developer\",\"provider\":\"netlify\"}"
+        },
+        {
+          "name": "gotrue.user",
+          "value": "{\"id\":\"dasyu-member-1\",\"email\":\"alex.developer@chintap.com\",\"app_metadata\":{\"provider\":\"email\",\"roles\":[\"developer\"]},\"user_metadata\":{\"full_name\":\"Alex Developer\"},\"token\":{\"access_token\":\"dasyu-simulated-jwt\",\"expires_at\":2524608000000}}"
+        },
+        {
+          "name": "chintap-theme",
+          "value": "dark"
+        }
+      ]
+    }
+  ]
+}
