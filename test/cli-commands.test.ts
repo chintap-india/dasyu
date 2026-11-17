@@ -6,6 +6,11 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
+function stripAnsi(str: string): string {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+}
+
 describe('Dasyu CLI Subcommands & Execution', () => {
   const cliBin = path.resolve(__dirname, '../bin/dasyu.js');
   const tmpDir = path.join(process.cwd(), 'test-cli-temp');
@@ -61,9 +66,10 @@ describe('Dasyu CLI Subcommands & Execution', () => {
     );
 
     const { stdout } = await execFileAsync(process.execPath, [cliBin, 'auth', 'inspect', authPath]);
-    expect(stdout).toContain('Auth Session Details');
-    expect(stdout).toContain('Cookies:  1');
-    expect(stdout).toContain('Domains:  my-app.com');
+    const cleanOut = stripAnsi(stdout);
+    expect(cleanOut).toContain('Auth Session Details');
+    expect(cleanOut).toContain('Cookies:  1');
+    expect(cleanOut).toContain('Domains:  my-app.com');
   });
 
   it('should execute auth import on external cookies array', async () => {
