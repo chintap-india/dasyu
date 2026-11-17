@@ -28,11 +28,11 @@ jobs:
       - name: Typecheck TypeScript
         run: npm run typecheck
 
-      - name: Run Vitest Unit Tests
-        run: npm test
-
       - name: Build Bundles
         run: npm run build
+
+      - name: Run Vitest Unit Tests
+        run: npm test
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

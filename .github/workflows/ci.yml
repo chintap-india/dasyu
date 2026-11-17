@@ -31,11 +31,11 @@ jobs:
       - name: Typecheck TypeScript
         run: npm run typecheck
 
-      - name: Run Vitest Unit Tests
-        run: npm test
-
       - name: Build Bundles (CJS, ESM, DTS)
         run: npm run build
+
+      - name: Run Vitest Unit Tests
+        run: npm test
 
       - name: Verify Trail Code Map Sync
         run: npx @trailhq/trail-code build --check
