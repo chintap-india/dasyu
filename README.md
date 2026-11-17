@@ -93,6 +93,11 @@ dasyu view ./demo-output/today
 # Or reveal the output folder in macOS Finder / system file explorer:
 dasyu view ./demo-output/chintap --finder
 
+# Export the entire visual dashboard & screenshots into a portable ZIP archive
+dasyu zip ./output
+# Or crawl with automated ZIP packaging:
+dasyu crawl https://chintap.com --zip
+
 # Clean/reset generated output folders (wipes ./output and ./results by default)
 dasyu clean
 # Or clean a specific directory:
@@ -107,6 +112,7 @@ dasyu clean ./my-snapshots
 | `-c, --concurrency <number>` | Max parallel browser pages | `3` |
 | `-o, --output <dir>` | Output directory for screenshots & content | `./output` |
 | `-O, --open` | Automatically open visual HTML report in default browser upon completion | `false` |
+| `--zip` | Export full visual dashboard and domain assets to a portable ZIP archive | `false` |
 | `-s, --storage-state <path>` | Playwright `storageState` JSON path (cookies, localStorage) | `undefined` |
 | `--auth <path>` | Alias for `-s, --storage-state` | `undefined` |
 | `--content` | Extract clean Markdown content & JSON metadata | `false` |
@@ -145,12 +151,17 @@ Every Dasyu crawl automatically generates a standalone, zero-dependency dark-mod
     - **Open Image ↗**: View full-resolution screenshot directly.
     - **View Markdown**: Open modal lightbox displaying extracted Markdown text, article headings, and readability metrics.
 - **Portable & Self-Contained**: The dashboard is generated as a single HTML file with embedded styles and fonts—perfect for sharing with teams, attaching to CI/CD artifacts, or publishing to static hosting.
+- **Brutal Minimal ZIP Export**: Bundle the entire dashboard, all full-page screenshots, and Markdown text into an offline, self-contained ZIP archive with zero external dependencies via `dasyu zip ./output` or `dasyu crawl <url> --zip`. Includes an optional download pill directly in the dashboard header.
 
 To automatically open the report immediately after a crawl completes:
 ```bash
 dasyu crawl https://chintap.com --open
-# Or view any existing report:
-dasyu view ./output
+
+# Automatically bundle into a ZIP archive:
+dasyu crawl https://chintap.com --zip
+
+# Or package any previously crawled folder into a ZIP bundle:
+dasyu zip ./output
 ```
 
 ---
