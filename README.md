@@ -87,8 +87,9 @@ dasyu crawl https://chintap.com --depth 1 --content --a11y --seo --open
 
 # Open the visual HTML crawl report or screenshots from any previous crawl
 dasyu view
-# Or view a specific output directory:
+# Or view the committed example reports directly:
 dasyu view ./demo-output/chintap
+dasyu view ./demo-output/today
 # Or reveal the output folder in macOS Finder / system file explorer:
 dasyu view ./demo-output/chintap --finder
 
@@ -154,17 +155,55 @@ dasyu view ./output
 
 ---
 
-## 📸 Example Captured Snapshots (`chintap.com`)
+## 📂 Real-World Example Reports & Snapshots
 
-Dasyu handles complex client-side rendered Single Page Applications, CSS animations, and modern typography out of the box. Below are real full-page snapshots automatically captured during a live depth-controlled crawl of [chintap.com](https://chintap.com):
+Dasyu includes committed, full-fidelity crawl reports and assets for both public websites and authenticated applications. You can inspect the reports in your browser at any time with `dasyu view`:
+
+```bash
+# View the public crawl report (chintap.com):
+dasyu view ./demo-output/chintap
+
+# View the authenticated web application report (today.chintap.com):
+dasyu view ./demo-output/today
+```
+
+---
+
+### 🌐 1. Public Multi-Page Exploration — [`chintap.com`](https://chintap.com)
+
+A live depth-controlled crawl of [chintap.com](https://chintap.com) exploring 9 linked pages, rendering modern Single Page Application (SPA) typography, CSS animations, and layout structures:
+
+- **Interactive HTML Report**: [`demo-output/chintap/report.html`](./demo-output/chintap/report.html)
+- **Discovered Site Graph**: [`demo-output/chintap/site-graph.mmd`](./demo-output/chintap/site-graph.mmd) & [`site-graph.json`](./demo-output/chintap/site-graph.json)
+- **RAG Semantic Chunks**: [`demo-output/chintap/rag-chunks.jsonl`](./demo-output/chintap/rag-chunks.jsonl)
+- **Clean Markdown Content**: [`demo-output/chintap/chintap.com/content/`](./demo-output/chintap/chintap.com/content/)
+- **Full-Page DOM Snapshots**: [`demo-output/chintap/chintap.com/screenshots/`](./demo-output/chintap/chintap.com/screenshots/)
 
 | Page | Captured DOM Snapshot | Extracted Artifacts |
 | :--- | :--- | :--- |
-| **Homepage**<br>`https://chintap.com/` | <a href="./assets/examples/chintap-home.png"><img src="./assets/examples/chintap-home.png" width="400" alt="chintap.com Homepage Snapshot" /></a> | • Status: `200 OK` (Depth 0)<br>• Links Discovered: 10<br>• Snapshot: [chintap-home.png](./assets/examples/chintap-home.png) |
-| **What We Do**<br>`https://chintap.com/what-we-do` | <a href="./assets/examples/chintap-what-we-do.png"><img src="./assets/examples/chintap-what-we-do.png" width="400" alt="What We Do Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Purposeful software & physical products<br>• Snapshot: [chintap-what-we-do.png](./assets/examples/chintap-what-we-do.png) |
-| **How We Work**<br>`https://chintap.com/how-we-work` | <a href="./assets/examples/chintap-how-we-work.png"><img src="./assets/examples/chintap-how-we-work.png" width="400" alt="How We Work Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Prototyping & engineering pipelines<br>• Snapshot: [chintap-how-we-work.png](./assets/examples/chintap-how-we-work.png) |
-| **Dasyu Product Page**<br>`https://chintap.com/dasyu` | <a href="./assets/examples/chintap-dasyu.png"><img src="./assets/examples/chintap-dasyu.png" width="400" alt="Dasyu Product Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• CLI, REPL & Auth Bridge documentation<br>• Snapshot: [chintap-dasyu.png](./assets/examples/chintap-dasyu.png) |
-| **Explorations**<br>`https://chintap.com/explorations` | <a href="./assets/examples/chintap-explorations.png"><img src="./assets/examples/chintap-explorations.png" width="400" alt="Explorations Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Architectural blueprints & labs<br>• Snapshot: [chintap-explorations.png](./assets/examples/chintap-explorations.png) |
+| **Homepage**<br>`https://chintap.com/` | <a href="./assets/examples/chintap-home.png"><img src="./assets/examples/chintap-home.png" width="380" alt="chintap.com Homepage Snapshot" /></a> | • Status: `200 OK` (Depth 0)<br>• Links Discovered: 10<br>• Snapshot: [chintap-home.png](./assets/examples/chintap-home.png)<br>• Content: [index.md](./demo-output/chintap/chintap.com/content/2026-11-17_13-50-02__index.md) |
+| **What We Do**<br>`https://chintap.com/what-we-do` | <a href="./assets/examples/chintap-what-we-do.png"><img src="./assets/examples/chintap-what-we-do.png" width="380" alt="What We Do Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Purposeful software & physical products<br>• Snapshot: [chintap-what-we-do.png](./assets/examples/chintap-what-we-do.png)<br>• Content: [what-we-do.md](./demo-output/chintap/chintap.com/content/2026-11-17_13-50-02__what-we-do.md) |
+| **How We Work**<br>`https://chintap.com/how-we-work` | <a href="./assets/examples/chintap-how-we-work.png"><img src="./assets/examples/chintap-how-we-work.png" width="380" alt="How We Work Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Prototyping & engineering pipelines<br>• Snapshot: [chintap-how-we-work.png](./assets/examples/chintap-how-we-work.png)<br>• Content: [how-we-work.md](./demo-output/chintap/chintap.com/content/2026-11-17_13-50-02__how-we-work.md) |
+| **Dasyu Product Page**<br>`https://chintap.com/dasyu` | <a href="./assets/examples/chintap-dasyu.png"><img src="./assets/examples/chintap-dasyu.png" width="380" alt="Dasyu Product Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• System architecture & REPL inspector<br>• Snapshot: [chintap-dasyu.png](./assets/examples/chintap-dasyu.png) |
+| **Explorations**<br>`https://chintap.com/explorations` | <a href="./assets/examples/chintap-explorations.png"><img src="./assets/examples/chintap-explorations.png" width="380" alt="Explorations Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Blueprints & software explorations<br>• Snapshot: [chintap-explorations.png](./assets/examples/chintap-explorations.png)<br>• Content: [explorations.md](./demo-output/chintap/chintap.com/content/2026-11-17_13-50-04__explorations.md) |
+
+---
+
+### 🔐 2. Authenticated Application Exploration — [`today.chintap.com`](https://today.chintap.com)
+
+A deep crawl of the [Today](https://today.chintap.com) task management web application executing behind **Netlify Identity** authentication, using Playwright `storageState` session tokens:
+
+- **Interactive HTML Report**: [`demo-output/today/report.html`](./demo-output/today/report.html)
+- **Discovered Site Graph**: [`demo-output/today/site-graph.mmd`](./demo-output/today/site-graph.mmd) & [`site-graph.json`](./demo-output/today/site-graph.json)
+- **RAG Semantic Chunks**: [`demo-output/today/rag-chunks.jsonl`](./demo-output/today/rag-chunks.jsonl)
+- **Clean Markdown Content**: [`demo-output/today/today.chintap.com/content/`](./demo-output/today/today.chintap.com/content/)
+- **Full-Page DOM Snapshots**: [`demo-output/today/today.chintap.com/screenshots/`](./demo-output/today/today.chintap.com/screenshots/)
+
+| Authenticated Route | Captured DOM Snapshot | Extracted Artifacts |
+| :--- | :--- | :--- |
+| **Tasks Management Dashboard**<br>`https://today.chintap.com/tasks` | <a href="./assets/examples/today-tasks.png"><img src="./assets/examples/today-tasks.png" width="380" alt="Today Tasks Management Snapshot" /></a> | • Status: `200 OK` (Behind Netlify Identity)<br>• Priority filters, task lists, and metadata<br>• Snapshot: [today-tasks.png](./assets/examples/today-tasks.png)<br>• Content: [tasks.md](./demo-output/today/today.chintap.com/content/2026-11-17_17-49-45__tasks.md) |
+| **Today Landing & Overview**<br>`https://today.chintap.com/` | <a href="./assets/examples/today-home.png"><img src="./assets/examples/today-home.png" width="380" alt="Today Homepage Snapshot" /></a> | • Status: `200 OK`<br>• Design philosophy: *Work. Without the overhead.*<br>• Snapshot: [today-home.png](./assets/examples/today-home.png)<br>• Content: [index.md](./demo-output/today/today.chintap.com/content/2026-11-17_17-49-42__index.md) |
+| **Interactive Sandbox Demo**<br>`https://today.chintap.com/demo` | <a href="./assets/examples/today-demo.png"><img src="./assets/examples/today-demo.png" width="380" alt="Today Demo Page Snapshot" /></a> | • Status: `200 OK`<br>• Interactive feature tour & sample workflows<br>• Snapshot: [today-demo.png](./assets/examples/today-demo.png)<br>• Content: [demo.md](./demo-output/today/today.chintap.com/content/2026-11-17_17-49-48__demo.md) |
 
 ---
 

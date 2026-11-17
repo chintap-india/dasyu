@@ -25,6 +25,7 @@ export interface ReportOptions {
   reportFilename?: string;
   siteGraphMermaidPath?: string;
   ragChunksCount?: number;
+  zipFileName?: string;
 }
 
 /**
@@ -615,9 +616,18 @@ export async function generateHtmlReport(
       </div>
     </div>
 
-    <div class="target-pill">
-      <span class="target-dot"></span>
-      <span>${escapeHtml(startUrl)}</span>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      ${
+        options?.zipFileName
+          ? `<a href="./${escapeHtml(options.zipFileName)}" download class="target-pill" style="text-decoration: none; color: #FFF; background: rgba(234, 28, 36, 0.15); border-color: rgba(234, 28, 36, 0.4); font-weight: 500; cursor: pointer;">
+        <span>📦 Download ZIP</span>
+      </a>`
+          : ''
+      }
+      <div class="target-pill">
+        <span class="target-dot"></span>
+        <span>${escapeHtml(startUrl)}</span>
+      </div>
     </div>
   </header>
 

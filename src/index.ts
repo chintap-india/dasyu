@@ -30,6 +30,7 @@ export {
 export { exportRagChunks, type RagChunk, type RagExportOptions } from './core/rag';
 export { exportSiteGraph, type SiteGraph, type SiteGraphNode, type SiteGraphEdge } from './core/graph';
 export { generateHtmlReport, openTarget, type ReportOptions } from './core/report';
+export { buildZipArchive, exportDashboardZip, type ZipEntry, type ExportZipResult } from './core/zip';
 export { startMcpServer } from './mcp/server';
 export { captureScreenshot, sanitizeUrlToFilename, dismissCookieBanners } from './extractors/screenshot';
 export { extractPageContent, type ExtractedContentResult } from './extractors/content';

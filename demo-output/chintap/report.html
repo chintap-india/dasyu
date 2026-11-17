@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dasyu Crawl Report — chintap.com</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0D12;
+      --card-bg: rgba(23, 27, 37, 0.85);
+      --card-border: #344052;
+      --text: #F3F4F6;
+      --text-muted: #9AA5B5;
+      --accent-red: #EA1C24;
+      --accent-gradient: linear-gradient(90deg, #E62938 0%, #EA1C24 60%, #ff4d5a 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Ambient top accent */
+    .top-accent {
+      width: 100%;
+      height: 5px;
+      background: var(--accent-gradient);
+    }
+
+    header {
+      padding: 32px 48px 24px 48px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      background: rgba(18, 22, 31, 0.8);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .emblem-svg {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-title .red { color: var(--accent-red); }
+    .brand-subtitle {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .target-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #171B25;
+      border: 1px solid var(--card-border);
+      padding: 10px 18px;
+      border-radius: 9999px;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .target-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      box-shadow: 0 0 10px var(--accent-red);
+    }
+
+    /* KPI Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 24px 48px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+    .kpi-value.good { color: #10B981; }
+    .kpi-value.warn { color: #F59E0B; }
+
+    /* Controls Bar */
+    .controls-bar {
+      padding: 0 48px 24px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      background: #171B25;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      min-width: 320px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--accent-red);
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 28px;
+      padding: 0 48px;
+    }
+
+    .page-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .page-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(234, 28, 36, 0.6);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-200 { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-warn { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .depth-badge { background: #222938; color: var(--text-muted); border: 1px solid var(--card-border); }
+
+    .page-url {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .page-url:hover { color: var(--text); text-decoration: underline; }
+
+    .page-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .meta-pill {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #171B25;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+    }
+    .score-good { color: #10B981; border-color: rgba(16, 185, 129, 0.4); }
+    .score-med { color: #F59E0B; border-color: rgba(245, 158, 11, 0.4); }
+    .score-bad { color: #EF4444; border-color: rgba(239, 68, 68, 0.4); }
+
+    .screenshot-frame {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      background: #0E121B;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .screenshot-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      transition: transform 0.3s;
+    }
+    .screenshot-frame:hover img {
+      transform: scale(1.03);
+    }
+    .screenshot-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 13, 18, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+    .screenshot-frame:hover .screenshot-overlay {
+      opacity: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .action-btn {
+      flex: 1;
+      text-align: center;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      background: #222938;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .action-btn:hover {
+      background: #2C3549;
+      border-color: var(--text-muted);
+    }
+    .action-btn.primary {
+      background: rgba(234, 28, 36, 0.18);
+      border-color: rgba(234, 28, 36, 0.5);
+      color: #ff5a64;
+    }
+    .action-btn.primary:hover {
+      background: rgba(234, 28, 36, 0.3);
+      border-color: var(--accent-red);
+    }
+
+    /* Modal / Lightbox */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .lightbox-modal.active { display: flex; }
+    .lightbox-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      background: #12151D;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: auto;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+    }
+    .lightbox-content img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--card-border);
+      color: #FFF;
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Markdown Drawer / Modal */
+    .md-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 101;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    .md-modal.active { display: flex; }
+    .md-card {
+      width: 800px;
+      max-width: 95vw;
+      max-height: 85vh;
+      background: #121620;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .md-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .md-body {
+      padding: 24px;
+      overflow-y: auto;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #D1D5DB;
+      white-space: pre-wrap;
+    }
+
+    footer {
+      margin-top: 60px;
+      border-top: 1px solid var(--card-border);
+      padding: 32px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .footer-brand {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 900;
+      font-size: 22px;
+      color: #FFFFFF;
+    }
+    .footer-brand .red { color: var(--accent-red); }
+  </style>
+</head>
+<body>
+  <div class="top-accent"></div>
+
+  <header>
+    <div class="brand-group">
+      <svg class="emblem-svg" viewBox="0 0 659 628" fill="none">
+        <polygon points="16,17 230,17 16,107" fill="#FFFFFF" />
+        <polygon points="16,107 230,17 480,17 638,155 16,327" fill="#EA1C24" />
+        <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#FFFFFF" />
+      </svg>
+      <div>
+        <div class="brand-title">dasyu <span class="red">दस्यु</span></div>
+        <div class="brand-subtitle">Automated Crawl &amp; Audit Report</div>
+      </div>
+    </div>
+
+    <div class="target-pill">
+      <span class="target-dot"></span>
+      <span>https://chintap.com</span>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="kpi-card">
+      <span class="kpi-label">Pages Crawled</span>
+      <span class="kpi-value">9</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Total Duration</span>
+      <span class="kpi-value">18.50s</span>
+    </div>
+    <div class="kpi-card">
+             <span class="kpi-label">Avg A11y Score</span>
+             <span class="kpi-value warn">72/100</span>
+           </div>
+    
+    <div class="kpi-card">
+             <span class="kpi-label">RAG Chunks</span>
+             <span class="kpi-value">163</span>
+           </div>
+  </div>
+
+  <div class="controls-bar">
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search crawled pages by title or URL..." oninput="filterCards()" />
+    <span style="color: var(--text-muted); font-size: 14px;">Showing <strong id="visibleCount" style="color: #FFF;">9</strong> of 9 pages</span>
+  </div>
+
+  <div class="gallery-grid" id="galleryGrid">
+    
+        <div class="page-card" data-url="https://chintap.com/" data-title="Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 0</span>
+            </div>
+            <a href="https://chintap.com/" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/">
+              https://chintap.com/ ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things">Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>90/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 9 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-49-58__index.png" alt="Screenshot of Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-49-58__index.png', 'Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-49-58__index.png', 'Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-49-58__index.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things', `# Chintap | Things. Apps. Possibilities. — Exploring Ideas &amp; Building Useful Things
+
+&gt; **URL**: [https://chintap.com/](https://chintap.com/)
+&gt; **Extracted At**: 2026-11-17T13:49:59.711Z
+&gt; **Description**: Chintap explores ideas and builds useful things across the physical and digital worlds — from software and applications to products and connected experiences.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Things. Apps. Possibilities.
+
+# Ever caught yourself wondering, what if?
+
+What if that everyday annoyance had a better solution?
+
+What if an idea in your head could become something you could hold, use, or share?
+
+What if two seemingly unrelated things could come together to make something new?
+
+You know the feeling. A thought comes along. You turn it over in your head. You tap your chin. And before long, you&#039;re wondering where it could lead.
+
+That&#039;s chintap.
+
+Let&#039;s Talk [What we do](/what-we-do) Watch Intro 0:20
+
+01
+
+## It could be a thing. It could be an app.
+
+Some ideas take shape in the physical world. Others live on a screen. Some bring the two together in ways you hadn&#039;t considered before.
+
+A thought could become a useful little tool, a product, a piece of software, or something th
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/how-we-work" data-title="How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/how-we-work" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/how-we-work">
+              https://chintap.com/how-we-work ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap">How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>100/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-01__how-we-work.png" alt="Screenshot of How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-01__how-we-work.png', 'How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-01__how-we-work.png', 'How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-01__how-we-work.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap', `# How We Work | Exploring, Prototyping &amp; Building What Matters | Chintap
+
+&gt; **URL**: [https://chintap.com/how-we-work](https://chintap.com/how-we-work)
+&gt; **Extracted At**: 2026-11-17T13:50:02.586Z
+&gt; **Description**: Explore before you commit. Make something we can learn from. Keep what works, rethink what doesn&#039;t, and know when it&#039;s enough.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Approach
+
+# How we work.
+
+## First, let&#039;s figure it out.
+
+Not every idea arrives with a plan. Sometimes there&#039;s a clear problem and an obvious place to begin. Sometimes there&#039;s only a hunch that something could work better.
+
+Either way, we start by getting curious.
+
+What&#039;s the problem? Who is it affecting? What would a better outcome look like? And is there a simpler way to get there?
+
+The answers help us figure out what to do next.
+
+PRINCIPLE 01
+
+### Explore before you commit.
+
+There is rarely just one way to approach a problem.
+
+We look at different possibilities, question our assumptions, and consider what makes sense given the time, resources, and outcome we&#039;re aiming for.
+
+Sometimes the right answer is an app. Sometimes it&#039;s a physical product. Sometimes it&#039;s a combination of things. And sometim
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/what-we-do" data-title="What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/what-we-do" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/what-we-do">
+              https://chintap.com/what-we-do ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap">What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>100/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-01__what-we-do.png" alt="Screenshot of What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-01__what-we-do.png', 'What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-01__what-we-do.png', 'What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-01__what-we-do.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap', `# What We Do | Physical Products, Purposeful Apps &amp; Connected Possibilities | Chintap
+
+&gt; **URL**: [https://chintap.com/what-we-do](https://chintap.com/what-we-do)
+&gt; **Extracted At**: 2026-11-17T13:50:02.586Z
+&gt; **Description**: At Chintap, we explore ideas, build products, and work on problems that are worth solving — across physical things, apps, and connected possibilities.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Capability
+
+# What we do.
+
+## It depends on the idea.
+
+Some ideas are easier to explain once you can see them. Some need a little exploring before they make sense. And some turn out to be something quite different from what you first imagined.
+
+That&#039;s part of the fun.
+
+At Chintap, we explore ideas, build products, and work on problems that are worth solving. Sometimes that means making something physical. Sometimes it means writing software. Sometimes it means bringing the two together.
+
+The starting point can be almost anything. What matters is figuring out what to do with it.
+
+SECTION 01
+
+### Things you can use, hold, wear, or play with.
+
+Not everything belongs on a screen.
+
+Some ideas call for something tangible — an object, a product, a useful tool, or a hands-o
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/explorations" data-title="Explorations | Some Thoughts Are Worth Following | Chintap" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/explorations" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/explorations">
+              https://chintap.com/explorations ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Explorations | Some Thoughts Are Worth Following | Chintap">Explorations | Some Thoughts Are Worth Following | Chintap</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>90/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-02__explorations.png" alt="Screenshot of Explorations | Some Thoughts Are Worth Following | Chintap" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-02__explorations.png', 'Explorations | Some Thoughts Are Worth Following | Chintap')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-02__explorations.png', 'Explorations | Some Thoughts Are Worth Following | Chintap')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-02__explorations.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Explorations | Some Thoughts Are Worth Following | Chintap', `# Explorations | Some Thoughts Are Worth Following | Chintap
+
+&gt; **URL**: [https://chintap.com/explorations](https://chintap.com/explorations)
+&gt; **Extracted At**: 2026-11-17T13:50:04.670Z
+&gt; **Description**: These are some of the questions and possibilities Chintap is exploring — from small everyday moments and habit building to thoughtful tools and meaningful connection.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Explorations
+
+# Explorations.
+
+## Some thoughts are worth following.
+
+Not every idea begins with a plan. Sometimes it begins with a question, a small frustration, or the feeling that something could work a little better.
+
+A passing thought becomes something you return to. You look at it from another angle. You wonder who else might have thought about it. And gradually, a possibility begins to take shape.
+
+This is where some of our own explorations begin.
+
+EXPLORATION 01
+
+### The little things matter.
+
+Much of everyday life is made up of small moments, familiar routines, and conversations we barely notice.
+
+A habit we&#039;re trying to build. A thought that&#039;s difficult to explain. A question a child asks. A conversation between people who want the best for someone but don&#039;t al
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/partners" data-title="Partners | Better Things Can Happen Together | Chintap" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/partners" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/partners">
+              https://chintap.com/partners ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Partners | Better Things Can Happen Together | Chintap">Partners | Better Things Can Happen Together | Chintap</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-bad">
+            <span>♿ A11y: <strong>0/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-06__partners.png" alt="Screenshot of Partners | Better Things Can Happen Together | Chintap" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-06__partners.png', 'Partners | Better Things Can Happen Together | Chintap')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-06__partners.png', 'Partners | Better Things Can Happen Together | Chintap')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-06__partners.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Partners | Better Things Can Happen Together | Chintap', `# Partners | Better Things Can Happen Together | Chintap
+
+&gt; **URL**: [https://chintap.com/partners](https://chintap.com/partners)
+&gt; **Extracted At**: 2026-11-17T13:50:07.787Z
+&gt; **Description**: Good partnerships aren&#039;t built by matching labels. They begin when people find a reason to work together across tech, media, platform, and creative spaces.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Collaboration
+
+# Partners.
+
+## Better things can happen together.
+
+Some ideas need a different perspective. Some need a skill we don&#039;t have in the room. Others need the right introduction, a shared effort, or someone who sees the same possibility and wants to help explore it.
+
+Good partnerships aren&#039;t built by matching labels. They begin when people find a reason to work together.
+
+That&#039;s what we&#039;re interested in at Chintap.
+
+PERSPECTIVE 01
+
+### Different strengths. Shared possibilities.
+
+The right person or organisation might help shape an idea, bring it into the world, help it reach the people it is meant for, or make the next step possible.
+
+Sometimes the contribution is creative. Sometimes it&#039;s practical. Sometimes it&#039;s a platform, a connection, an audience, or experience we can learn from
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/academy" data-title="Academy by Chintap | From Ideas to Life" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/academy" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/academy">
+              https://chintap.com/academy ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Academy by Chintap | From Ideas to Life">Academy by Chintap | From Ideas to Life</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-bad">
+            <span>♿ A11y: <strong>0/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-05__academy.png" alt="Screenshot of Academy by Chintap | From Ideas to Life" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-05__academy.png', 'Academy by Chintap | From Ideas to Life')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-05__academy.png', 'Academy by Chintap | From Ideas to Life')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-05__academy.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Academy by Chintap | From Ideas to Life', `# Academy by Chintap | From Ideas to Life
+
+&gt; **URL**: [https://chintap.com/academy](https://chintap.com/academy)
+&gt; **Extracted At**: 2026-11-17T13:50:07.787Z
+&gt; **Description**: At Academy by Chintap, we help turn thoughts and curiosity into working digital products. Imagine · Explore · Learn · Build · Test · Launch.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Academy by Chintap • From ideas to life
+
+# Academy by chintap
+
+## From ideas to life.
+
+Every great product starts somewhere. A thought, a problem worth solving, a little curiosity, or an idea that refuses to go away.
+
+At Academy by Chintap, we help turn that starting point into something real.
+
+Explore technology, learn by doing, experiment with ideas, build meaningful things, and discover what you&#039;re capable of creating.
+
+Imagine · Explore · Learn · Build · Test · Launch
+
+Our Philosophy
+
+## More than learning. It&#039;s about making.
+
+Knowing something is one thing. Knowing what to do with it is another.
+
+We believe the best way to learn is to create. To explore possibilities, ask questions, make mistakes, solve problems, and gradually turn ideas into working products.
+
+PILLAR 01
+
+### Curiosity
+
+Develop the habit of asking questions and
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/about" data-title="About Chintap | Curious by Nature — Things. Apps. Possibilities." data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/about" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/about">
+              https://chintap.com/about ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="About Chintap | Curious by Nature — Things. Apps. Possibilities.">About Chintap | Curious by Nature — Things. Apps. Possibilities.</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>100/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-07__about.png" alt="Screenshot of About Chintap | Curious by Nature — Things. Apps. Possibilities." loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-07__about.png', 'About Chintap | Curious by Nature — Things. Apps. Possibilities.')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-07__about.png', 'About Chintap | Curious by Nature — Things. Apps. Possibilities.')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-07__about.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('About Chintap | Curious by Nature — Things. Apps. Possibilities.', `# About Chintap | Curious by Nature — Things. Apps. Possibilities.
+
+&gt; **URL**: [https://chintap.com/about](https://chintap.com/about)
+&gt; **Extracted At**: 2026-11-17T13:50:09.283Z
+&gt; **Description**: Chintap is an independent venture exploring ideas, building products, and discovering possibilities across the physical and digital worlds.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Philosophy
+
+# About chintap.
+
+## Curious by nature.
+
+Some people see something and wonder how it works. Others see how it works and wonder how it could be better.
+
+Sometimes, a passing thought becomes an idea you can&#039;t quite leave alone. You turn it over, explore it from another angle, and start wondering what might happen if you tried something different.
+
+Chintap comes from that kind of curiosity.
+
+We&#039;re interested in ideas, in making things, and in discovering possibilities that aren&#039;t always obvious at first.
+
+PERSPECTIVE 01
+
+### No single box to fit into.
+
+The world doesn&#039;t neatly separate physical things from digital ones. Nor do interesting problems arrive labelled with the technology needed to solve them.
+
+An idea might lead to a product, an app, a connected device, or something entirely unexpecte
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/building-teams" data-title="Building Teams | Good Work Needs the Right People | Chintap" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/building-teams" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/building-teams">
+              https://chintap.com/building-teams ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Building Teams | Good Work Needs the Right People | Chintap">Building Teams | Good Work Needs the Right People | Chintap</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-med">
+            <span>♿ A11y: <strong>80/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-11__building-teams.png" alt="Screenshot of Building Teams | Good Work Needs the Right People | Chintap" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-11__building-teams.png', 'Building Teams | Good Work Needs the Right People | Chintap')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-11__building-teams.png', 'Building Teams | Good Work Needs the Right People | Chintap')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-11__building-teams.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Building Teams | Good Work Needs the Right People | Chintap', `# Building Teams | Good Work Needs the Right People | Chintap
+
+&gt; **URL**: [https://chintap.com/building-teams](https://chintap.com/building-teams)
+&gt; **Extracted At**: 2026-11-17T13:50:12.553Z
+&gt; **Description**: Building the team is part of building the thing. We help organisations bring the right people together and build teams around meaningful work.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Chintap Teams
+
+# Building teams.
+
+## Good work needs the right people.
+
+Sometimes the ambition is clear, but the way to get there isn&#039;t.
+
+An organisation may be starting something new. An existing team may need to take on a different kind of work. A promising idea may need people with the right mix of skills, experience, and shared direction to move beyond the drawing board.
+
+Building the team is part of building the thing.
+
+That&#039;s where we can help.
+
+[← Return to Explorations](/explorations)
+
+APPROACH 01
+
+### Start with what needs to happen.
+
+Before thinking about roles, structures, or headcount, it helps to understand the work ahead.
+
+What are you trying to make possible? What needs to happen that isn&#039;t happening today? What should the team be able to do, and what would meaningful progress look 
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+
+        <div class="page-card" data-url="https://chintap.com/contact" data-title="Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries" data-status="200">
+          <div class="card-header">
+            <div class="card-badges">
+              <span class="badge status-200">200</span>
+              <span class="badge depth-badge">Depth 1</span>
+            </div>
+            <a href="https://chintap.com/contact" target="_blank" rel="noopener noreferrer" class="page-url" title="https://chintap.com/contact">
+              https://chintap.com/contact ↗
+            </a>
+          </div>
+
+          <h3 class="page-title" title="Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries">Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries</h3>
+
+          <div class="meta-row">
+            
+          <div class="meta-pill score-good">
+            <span>♿ A11y: <strong>90/100</strong> (undefined violations)</span>
+          </div>
+        
+            
+          <div class="meta-pill score-good">
+            <span>🔍 SEO: <strong>0 warnings</strong> (H1: 1)</span>
+          </div>
+        
+            <div class="meta-pill">
+              <span>🔗 0 links</span>
+            </div>
+          </div>
+
+          <div class="screenshot-frame">
+            <img src="chintap.com/screenshots/2026-11-17_13-50-11__contact.png" alt="Screenshot of Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries" loading="lazy" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-11__contact.png', 'Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries')" />
+                   <div class="screenshot-overlay" onclick="openLightbox('chintap.com/screenshots/2026-11-17_13-50-11__contact.png', 'Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries')">
+                     <span>🔍 Click to expand full-page screenshot</span>
+                   </div>
+          </div>
+
+          <div class="card-footer">
+            <a href="chintap.com/screenshots/2026-11-17_13-50-11__contact.png" target="_blank" class="action-btn">Open Image ↗</a>
+            <button class="action-btn primary" onclick="showMarkdownModal('Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries', `# Let&#039;s Talk | Contact Chintap — Share Your Ideas &amp; Inquiries
+
+&gt; **URL**: [https://chintap.com/contact](https://chintap.com/contact)
+&gt; **Extracted At**: 2026-11-17T13:50:12.553Z
+&gt; **Description**: Every interesting thing starts somewhere. Bring us a problem, an idea, or a question you&#039;ve been thinking about. We&#039;ll take it from there.
+
+---
+
+     
+
+[Skip to main content](#main-content)
+
+[
+
+![Chintap Tap Icon](images/chintap-emblem-light.svg)
+
+chintap Things. Apps. Possibilities.
+
+](/)
+
+[Home](/) [What we do](/what-we-do) [How we work](/how-we-work) [Explorations](/explorations) [Academy](/academy) [Partners](/partners) [About](/about) [Contact](/contact)
+
+Let&#039;s Talk
+
+Conversation
+
+# Let&#039;s talk.
+
+## Every interesting thing starts somewhere.
+
+Maybe you have an idea you&#039;ve been turning over in your head. Maybe there&#039;s a problem you&#039;d like to solve, something you&#039;d like to build, or a possibility you&#039;re curious about.
+
+You don&#039;t need to have it all figured out before reaching out.
+
+Tell us a little about what&#039;s on your mind. We&#039;ll take it from there.
+
+### What are you thinking about?
+
+It could be a product, an app, a business problem, a collaboration, or something that doesn&#039;t quite fit into any of those categories.
+
+We&#039;re happy to hear about it.
+
+Use the form to get in touch directly. We review every note personally and typically respond within 1–2 business days.
+
+### A few things that help
+
+*   •What are you thinking about?
+*   •What problem are you trying to solve, or what would
+
+... (truncated for preview)`)">View Markdown</button>
+          </div>
+        </div>
+      
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+      <img id="lightboxImg" src="" alt="Full-page Screenshot" />
+    </div>
+  </div>
+
+  <!-- Markdown Modal -->
+  <div id="mdModal" class="md-modal" onclick="closeMarkdownModal()">
+    <div class="md-card" onclick="event.stopPropagation()">
+      <div class="md-header">
+        <h3 id="mdTitle" style="color: #FFF; font-size: 16px;">Extracted Content</h3>
+        <button class="action-btn" style="flex: 0; padding: 6px 14px;" onclick="closeMarkdownModal()">Close</button>
+      </div>
+      <div class="md-body" id="mdContent"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">
+      chin<span class="red">tap</span>
+    </div>
+    <div>THINGS. APPS. POSSIBILITIES. • dasyu.chintap.com</div>
+  </footer>
+
+  <script>
+    function openLightbox(src, title) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightboxModal').classList.add('active');
+    }
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('active');
+    }
+
+    function showMarkdownModal(title, content) {
+      document.getElementById('mdTitle').innerText = title;
+      document.getElementById('mdContent').innerText = content;
+      document.getElementById('mdModal').classList.add('active');
+    }
+    function closeMarkdownModal() {
+      document.getElementById('mdModal').classList.remove('active');
+    }
+
+    function filterCards() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.page-card');
+      let visible = 0;
+      cards.forEach(card => {
+        const url = (card.getAttribute('data-url') || '').toLowerCase();
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        if (url.includes(q) || title.includes(q)) {
+          card.style.display = 'flex';
+          visible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      document.getElementById('visibleCount').innerText = visible;
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        closeMarkdownModal();
+      }
+    });
+  </script>
+</body>
+</html>

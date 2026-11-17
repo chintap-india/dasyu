@@ -1,0 +1,101 @@
+{
+  "nodes": [
+    {
+      "id": "node_1",
+      "url": "https://chintap.com/",
+      "title": "Chintap | Things. Apps. Possibilities. — Exploring Ideas & Building Useful Things",
+      "depth": 0,
+      "status": 200
+    },
+    {
+      "id": "node_2",
+      "url": "https://chintap.com/how-we-work",
+      "title": "How We Work | Exploring, Prototyping & Building What Matters | Chintap",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_3",
+      "url": "https://chintap.com/what-we-do",
+      "title": "What We Do | Physical Products, Purposeful Apps & Connected Possibilities | Chintap",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_4",
+      "url": "https://chintap.com/explorations",
+      "title": "Explorations | Some Thoughts Are Worth Following | Chintap",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_5",
+      "url": "https://chintap.com/partners",
+      "title": "Partners | Better Things Can Happen Together | Chintap",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_6",
+      "url": "https://chintap.com/academy",
+      "title": "Academy by Chintap | From Ideas to Life",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_7",
+      "url": "https://chintap.com/about",
+      "title": "About Chintap | Curious by Nature — Things. Apps. Possibilities.",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_8",
+      "url": "https://chintap.com/building-teams",
+      "title": "Building Teams | Good Work Needs the Right People | Chintap",
+      "depth": 1,
+      "status": 200
+    },
+    {
+      "id": "node_9",
+      "url": "https://chintap.com/contact",
+      "title": "Let's Talk | Contact Chintap — Share Your Ideas & Inquiries",
+      "depth": 1,
+      "status": 200
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_1",
+      "target": "node_3"
+    },
+    {
+      "source": "node_1",
+      "target": "node_2"
+    },
+    {
+      "source": "node_1",
+      "target": "node_4"
+    },
+    {
+      "source": "node_1",
+      "target": "node_6"
+    },
+    {
+      "source": "node_1",
+      "target": "node_5"
+    },
+    {
+      "source": "node_1",
+      "target": "node_7"
+    },
+    {
+      "source": "node_1",
+      "target": "node_9"
+    },
+    {
+      "source": "node_1",
+      "target": "node_8"
+    }
+  ]
+}
