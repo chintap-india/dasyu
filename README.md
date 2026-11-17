@@ -34,7 +34,7 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 
 ```bash
 # 1. Clone the repository (or navigate to your local dasyu folder)
-git clone https://github.com/001bharathchetty/dasyu.git
+git clone https://github.com/chintap-india/dasyu.git
 cd dasyu
 
 # 2. Install dependencies & compile TypeScript
@@ -282,8 +282,8 @@ Available MCP tools:
 
 ## 🗺️ Roadmap & Future Plans
 
-### 🏢 Organization Migration (`chintap-india`)
-Once the application undergoes full dogfooding and hardening across internal threads, the repository will officially migrate under the **`chintap-india`** GitHub organization (`github.com/chintap-india/dasyu`).
+### 🏢 Organization & Repository
+The official home of Dasyu is hosted under the **`chintap-india`** GitHub organization at [`github.com/chintap-india/dasyu`](https://github.com/chintap-india/dasyu) with the web homepage at [`chintap.com/dasyu`](https://chintap.com/dasyu).
 
 ### 📦 Hardening & NPM Registry Publishing
 Public NPM publishing (`npm i -g dasyu`) is intentionally held while we dogfood Dasyu across internal web apps built in other threads. Releases and version bumps follow semantic versioning:
@@ -321,7 +321,7 @@ To re-render all high-resolution vector and raster assets using Google Chrome He
 ```bash
 npm run build:assets
 ```
-Asset exports are mirrored directly into `./public/images` to power the upcoming Dasyu web home page (`dasyu.chintap.com`).
+Asset exports are mirrored directly into `./public/images` to power the Dasyu web home page ([`chintap.com/dasyu`](https://chintap.com/dasyu)).
 
 ---
 

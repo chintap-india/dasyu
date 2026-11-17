@@ -688,7 +688,7 @@ export async function generateHtmlReport(
     <div class="footer-brand">
       chin<span class="red">tap</span>
     </div>
-    <div>THINGS. APPS. POSSIBILITIES. • dasyu.chintap.com</div>
+    <div>THINGS. APPS. POSSIBILITIES. • <a href="https://chintap.com/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">chintap.com/dasyu</a> • <a href="https://github.com/chintap-india/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">GitHub</a></div>
   </footer>
 
   <script>
