@@ -6,3 +6,4 @@ output/
 results/
 test-*/
 coverage/
+.claude/settings.local.json
