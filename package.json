@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:assets": "node scripts/build-brand-assets.js",
     "dev": "tsup --watch",
     "pretest": "npm run build",
     "test": "vitest run",

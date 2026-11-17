@@ -1,7 +1,11 @@
 # Dasyu (दस्यु)
 
 <p align="center">
-  <img src="./assets/dasyu-black.png" alt="Dasyu — The Outlaw of the Web" width="400" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/dasyu-brand-horizontal-dark-2400.png">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/dasyu-brand-horizontal-2400.png">
+    <img src="./assets/dasyu-brand-horizontal-dark-2400.png" alt="Dasyu (दस्यु) — The Outlaw of the Web" width="680" />
+  </picture>
 </p>
 
 > *The Outlaw of the Web.* A modern TypeScript/Node.js utility powered by Playwright to crawl web applications up to $N$ levels deep, capture full-page DOM screenshots, and extract clean Markdown content.
@@ -263,11 +267,35 @@ npm run bump:patch
 npm run bump:minor
 ```
 
-### 🔌 Extensible Plugin Architecture
-- **`Anomalyco Browse Plugin`** (`--detect-auth`): ✅ Completed (monitors login barriers and redirects).
-- **`SEO & Quality Audit Plugin`** (`--seo`): ✅ Completed (audits headings, meta tags, and alt attributes).
-- **`Accessibility (WCAG) Plugin`**: Hooking `@axe-core/playwright` into `onAnalyze` for automated WCAG 2.1 compliance audits.
-- **`Vector Store Exporter`**: Direct export of extracted Markdown into chunked embeddings for RAG pipelines (Chroma, LanceDB).
+### 🔌 Extensible Plugin Architecture & Capabilities
+- **`Anomalyco Browse Plugin`** (`--detect-auth`): ✅ Completed (monitors login barriers, bot walls, and auth redirects).
+- **`SEO & Quality Audit Plugin`** (`--seo`): ✅ Completed (audits headings hierarchy, meta descriptions, OpenGraph, canonical, and alt attributes).
+- **`Accessibility (WCAG) Plugin`** (`--a11y`): ✅ Completed (integrates `@axe-core/playwright` for automated WCAG 2.1 compliance audits).
+- **`RAG Semantic Chunking`** (`--rag`): ✅ Completed (generates heading-aware overlapping chunk embeddings in `./output/rag-chunks.jsonl`).
+- **`Site Link Graph Generator`** (`--graph`): ✅ Completed (outputs relational graph JSON and Mermaid flowchart diagrams in `./output/site-graph.mmd`).
+- **`Native MCP Server`** (`dasyu mcp`): ✅ Completed (Stdio JSON-RPC server powering AI agents in Gemini, Claude, and Cursor).
+
+---
+
+## 🎨 Brand Assets & Design System
+
+Dasyu shares the clean, high-precision aesthetic of Chintap Studio and the Today app:
+
+| Asset | Preview | Dimensions / Usage |
+| :--- | :--- | :--- |
+| **Dark Emblem (Vector)** | [`assets/dasyu-emblem-dark.svg`](./assets/dasyu-emblem-dark.svg) | Master dark mode emblem (Black body, Crimson slash) |
+| **Light Emblem (Vector)** | [`assets/dasyu-emblem-light.svg`](./assets/dasyu-emblem-light.svg) | Master light mode emblem for dark surfaces |
+| **Horizontal Brand (Dark)** | [`assets/dasyu-brand-horizontal-dark-2400.png`](./assets/dasyu-brand-horizontal-dark-2400.png) | 2400x800 high-res banner for dark backgrounds |
+| **Horizontal Brand (Light)** | [`assets/dasyu-brand-horizontal-2400.png`](./assets/dasyu-brand-horizontal-2400.png) | 2400x800 high-res banner for light backgrounds |
+| **OpenGraph Social Preview** | [`assets/dasyu-og.png`](./assets/dasyu-og.png) / [`.jpg`](./assets/dasyu-og.jpg) | 1200x630 card for Dasyu homepage and GitHub social previews |
+| **Square Brand Graphic** | [`assets/dasyu-brand-dark-2048.png`](./assets/dasyu-brand-dark-2048.png) | 2048x2048 retina square presentation graphic |
+| **Favicon & PWA Suite** | `favicon.png`, `apple-touch-icon-dark.png`, `pwa-icon-192.png`, `pwa-icon-512.png` | Web and mobile launcher icon package |
+
+To re-render all high-resolution vector and raster assets using Google Chrome Headless and `sips`:
+```bash
+npm run build:assets
+```
+Asset exports are mirrored directly into `./public/images` to power the upcoming Dasyu web home page (`dasyu.chintap.com`).
 
 ---
 
