@@ -4,6 +4,7 @@ dist/
 *.log
 output/
 results/
+demo-output/
 test-*/
 coverage/
 .claude/settings.local.json
