@@ -65,16 +65,16 @@ node ./bin/dasyu-mcp.js
 
 ```bash
 # Basic screenshot & crawl 1 level deep (default)
-dasyu crawl https://example.com --output ./results
+dasyu crawl https://chintap.com --output ./results
 
 # Crawl 3 levels deep, generating full-page screenshots AND clean Markdown content reports
-dasyu crawl https://example.com --depth 3 --content --output ./results
+dasyu crawl https://chintap.com --depth 3 --content --output ./results
 
 # Crawl an authenticated web app or dashboard using saved Playwright storageState cookies & localStorage
-dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+dasyu crawl https://today.chintap.com --auth ./auth.json --depth 2 --content
 
 # Specify concurrency limit (default is 3 parallel pages)
-dasyu crawl https://example.com --depth 2 --concurrency 5 --content
+dasyu crawl https://chintap.com --depth 2 --concurrency 5 --content
 
 # Clean/reset generated output folders (wipes ./output and ./results by default)
 dasyu clean
@@ -110,13 +110,13 @@ Launch a real browser window, sign in, solve Multi-Factor Authentication (2FA/SS
 
 ```bash
 # Open interactive login window and save session to ./auth.json
-dasyu auth login https://app.example.com/login
+dasyu auth login https://today.chintap.com/login
 
 # Or specify a custom output path
-dasyu auth login https://app.example.com/login -o ./my-session.json
+dasyu auth login https://today.chintap.com/login -o ./my-session.json
 
 # Now crawl the authenticated dashboard with your saved state
-dasyu crawl https://app.example.com/dashboard --auth ./auth.json --depth 2 --content
+dasyu crawl https://today.chintap.com --auth ./auth.json --depth 2 --content
 ```
 
 ### 2. Session Inspection & External Import (OpenCode Browse / Chrome)
@@ -134,17 +134,17 @@ dasyu auth import ./browse-cookies.json -o ./auth.json
 Enable the built-in **Anomalyco Browse Plugin** to monitor and alert on login walls, HTTP 401/403 status codes, and SSO redirects during autonomous crawls:
 
 ```bash
-dasyu crawl https://app.example.com --auth ./auth.json --detect-auth
+dasyu crawl https://today.chintap.com --auth ./auth.json --detect-auth
 ```
 
 In the interactive REPL, you can run all auth commands on the fly:
 ```bash
-dasyu> auth login https://app.example.com/login
+dasyu> auth login https://today.chintap.com/login
 ✔ Logged in and saved session to "./auth.json"!
 Session is now active for subsequent crawls in this REPL.
 
 dasyu> auth inspect ./auth.json
-dasyu> crawl https://app.example.com/settings --depth 2
+dasyu> crawl https://today.chintap.com/dashboard --depth 2
 ```
 
 ---
@@ -183,7 +183,7 @@ Current Session Configuration:
   allow-external: disabled
   auth (storage): ./my-cookies.json
 
-dasyu> crawl https://app.example.com/settings --depth 2
+dasyu> crawl https://today.chintap.com/dashboard --depth 2
 dasyu> clean
 ✔ Cleaned output directory (./output, ./results) and reset session pages.
 ```
@@ -199,7 +199,7 @@ import { DasyuCrawler } from 'dasyu';
 
 async function main() {
   const crawler = new DasyuCrawler({
-    startUrl: 'https://example.com/app',
+    startUrl: 'https://chintap.com',
     maxDepth: 2,
     concurrency: 3,
     extractContent: true,
