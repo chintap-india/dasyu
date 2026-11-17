@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
+import { BrowserManager } from '../core/browser';
 import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
 import { createBrowsePlugin } from '../plugins/browse';
 import { createSeoPlugin } from '../plugins/seo';
@@ -19,6 +20,8 @@ import pkg from '../../package.json';
  * Entry point for CLI argument parsing and command dispatch.
  */
 export async function main(): Promise<void> {
+  BrowserManager.registerExitHandlers();
+
   const program = new Command();
 
   program
@@ -27,7 +30,11 @@ export async function main(): Promise<void> {
     .version(pkg.version)
     .action(async () => {
       // Default action when no subcommand is provided: launch the interactive REPL!
-      await startRepl();
+      try {
+        await startRepl();
+      } finally {
+        await BrowserManager.closeAll().catch(() => {});
+      }
     });
 
   program
@@ -37,6 +44,7 @@ export async function main(): Promise<void> {
     .action(async (dirs?: string[]) => {
       const targets = (dirs && dirs.length > 0) ? dirs : ['./output', './results'];
       try {
+        await BrowserManager.closeAll().catch(() => {});
         for (const target of targets) {
           await fs.rm(target, { recursive: true, force: true });
         }
@@ -58,13 +66,17 @@ export async function main(): Promise<void> {
     .option('--auth <path>', 'Alias for --storage-state')
     .option('--no-content', 'Disable markdown content extraction')
     .action(async (opts) => {
-      await startRepl({
-        maxDepth: parseInt(opts.depth, 10) || 1,
-        concurrency: parseInt(opts.concurrency, 10) || 3,
-        outputDir: opts.output,
-        extractContent: opts.content !== false,
-        storageState: opts.storageState || opts.auth,
-      });
+      try {
+        await startRepl({
+          maxDepth: parseInt(opts.depth, 10) || 1,
+          concurrency: parseInt(opts.concurrency, 10) || 3,
+          outputDir: opts.output,
+          extractContent: opts.content !== false,
+          storageState: opts.storageState || opts.auth,
+        });
+      } finally {
+        await BrowserManager.closeAll().catch(() => {});
+      }
     });
 
   const authCmd = program
@@ -87,6 +99,7 @@ export async function main(): Promise<void> {
         logger.info(`Now crawl using: ${pc.bold(`dasyu crawl ${url} --auth ${opts.output}`)}\n`);
         process.exit(0);
       } catch (err: any) {
+        await BrowserManager.closeAll().catch(() => {});
         logger.error(`Interactive login failed: ${err?.message || String(err)}`);
         process.exit(1);
       }
@@ -237,6 +250,7 @@ export async function main(): Promise<void> {
         }
         process.exit(0);
       } catch (err: any) {
+        await BrowserManager.closeAll().catch(() => {});
         logger.error(`Fatal error during crawl: ${err?.message || String(err)}`);
         process.exit(1);
       }

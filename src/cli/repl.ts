@@ -362,6 +362,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
         case 'q':
           logger.info('Shutting down Dasyu browser session and exiting REPL...');
           await browserManager.close();
+          await BrowserManager.closeAll();
           rl.close();
           process.exit(0);
           break;
@@ -379,6 +380,7 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
 
   rl.on('close', async () => {
     await browserManager.close();
+    await BrowserManager.closeAll();
     process.exit(0);
   });
 }

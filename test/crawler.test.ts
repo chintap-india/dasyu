@@ -250,4 +250,62 @@ describe('DasyuCrawler Core Logic', () => {
     const elapsed = Date.now() - startTime;
     expect(elapsed).toBeGreaterThanOrEqual(40);
   });
+
+  it('should guarantee browserManager.close() is called even if a plugin throws an error in onStart', async () => {
+    const errorPlugin: DasyuPlugin = {
+      name: 'failing-plugin',
+      onStart: async () => {
+        throw new Error('Fatal plugin initialization crash');
+      },
+    };
+
+    const crawler = new DasyuCrawler({
+      startUrl: 'https://example.com',
+      plugins: [errorPlugin],
+    });
+
+    const closeSpy = vi.spyOn((crawler as any).browserManager, 'close');
+
+    await expect(crawler.run()).rejects.toThrow('Fatal plugin initialization crash');
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should support abort() and close() to stop crawling and release browser resources', async () => {
+    let pagesCrawled = 0;
+    const mockPage: any = {
+      goto: vi.fn().mockImplementation(async () => {
+        pagesCrawled++;
+        return { status: () => 200 };
+      }),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      title: vi.fn().mockResolvedValue('Page'),
+      evaluate: vi.fn().mockResolvedValue([]),
+      screenshot: vi.fn().mockResolvedValue(Buffer.from('')),
+      close: vi.fn().mockResolvedValue(undefined),
+      isClosed: vi.fn().mockReturnValue(false),
+    };
+
+    const mockBrowserManager: any = {
+      acquirePage: vi.fn().mockResolvedValue(mockPage),
+      releasePage: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const crawler = new DasyuCrawler(
+      {
+        startUrl: 'https://example.com',
+        maxDepth: 3,
+      },
+      mockBrowserManager
+    );
+
+    crawler.abort();
+    const result = await crawler.run();
+    expect(result).toBeDefined();
+    expect(pagesCrawled).toBe(0);
+
+    await crawler.close();
+    // persistentBrowser is true here because mockBrowserManager was injected
+    // When standalone, close() invokes browserManager.close()
+  });
 });

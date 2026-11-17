@@ -13,6 +13,7 @@ export class DasyuCrawler {
   private browserManager: BrowserManager;
   private persistentBrowser: boolean;
   private plugins: DasyuPlugin[];
+  private isAborted = false;
 
   constructor(options: CrawlOptions, browserManager?: BrowserManager) {
     this.options = {
@@ -28,6 +29,23 @@ export class DasyuCrawler {
     } else {
       this.browserManager = new BrowserManager({ storageState: options.storageState });
       this.persistentBrowser = false;
+    }
+  }
+
+  /**
+   * Signals the crawler to abort in-flight workers and stop processing further URLs.
+   */
+  public abort(): void {
+    this.isAborted = true;
+  }
+
+  /**
+   * Aborts active crawl operations and closes browser resources.
+   */
+  public async close(): Promise<void> {
+    this.abort();
+    if (!this.persistentBrowser) {
+      await this.browserManager.close();
     }
   }
 
@@ -68,6 +86,15 @@ export class DasyuCrawler {
   public async run(
     onProgress?: (pageData: PageData, completed: number, queueSize: number) => void
   ): Promise<CrawlResult> {
+    if (this.isAborted) {
+      return {
+        startUrl: this.options.startUrl,
+        totalDurationMs: 0,
+        pages: [],
+        errors: [],
+      };
+    }
+
     const startTime = Date.now();
     const startUrlNorm = this.normalizeUrl(this.options.startUrl);
     const queue: { url: string; depth: number }[] = [{ url: startUrlNorm, depth: 0 }];
@@ -75,84 +102,90 @@ export class DasyuCrawler {
     const pages: PageData[] = [];
     const errors: { url: string; depth: number; error: string }[] = [];
 
-    // Notify plugins onStart
-    for (const plugin of this.plugins) {
-      await plugin.onStart?.();
-    }
-
-    const concurrency = this.options.concurrency!;
-    const maxDepth = this.options.maxDepth!;
-    let activeWorkers = 0;
-
-    const runWorker = async () => {
-      while (true) {
-        let item: { url: string; depth: number } | undefined;
-        while (queue.length > 0) {
-          const candidate = queue.shift()!;
-          if (!visited.has(candidate.url)) {
-            visited.add(candidate.url);
-            item = candidate;
-            break;
-          }
-        }
-
-        if (!item) {
-          if (activeWorkers === 0) {
-            break; // All workers idle and queue is empty, crawl is complete
-          } else {
-            // Other workers are still processing and may discover new links
-            await new Promise((r) => setTimeout(r, 50));
-            continue;
-          }
-        }
-
-        activeWorkers++;
-        try {
-          const pageData = await this.processUrl(item.url, item.depth, maxDepth, queue, visited);
-          pages.push(pageData);
-          onProgress?.(pageData, pages.length + errors.length, queue.length);
-        } catch (err: any) {
-          const errorMsg = err?.message || String(err);
-          errors.push({ url: item.url, depth: item.depth, error: errorMsg });
-          const failedPage: PageData = {
-            url: item.url,
-            depth: item.depth,
-            title: 'Error',
-            status: 0,
-            links: [],
-            error: errorMsg,
-          };
-          pages.push(failedPage);
-          onProgress?.(failedPage, pages.length + errors.length, queue.length);
-        } finally {
-          activeWorkers--;
-        }
+    try {
+      // Notify plugins onStart
+      for (const plugin of this.plugins) {
+        await plugin.onStart?.();
       }
-    };
 
-    const workers: Promise<void>[] = [];
-    for (let i = 0; i < concurrency; i++) {
-      workers.push(runWorker());
+      const concurrency = this.options.concurrency!;
+      const maxDepth = this.options.maxDepth!;
+      let activeWorkers = 0;
+
+      const runWorker = async () => {
+        while (!this.isAborted) {
+          let item: { url: string; depth: number } | undefined;
+          while (queue.length > 0 && !this.isAborted) {
+            const candidate = queue.shift()!;
+            if (!visited.has(candidate.url)) {
+              visited.add(candidate.url);
+              item = candidate;
+              break;
+            }
+          }
+
+          if (this.isAborted) break;
+
+          if (!item) {
+            if (activeWorkers === 0) {
+              break; // All workers idle and queue is empty, crawl is complete
+            } else {
+              // Other workers are still processing and may discover new links
+              await new Promise((r) => setTimeout(r, 50));
+              continue;
+            }
+          }
+
+          activeWorkers++;
+          try {
+            const pageData = await this.processUrl(item.url, item.depth, maxDepth, queue, visited);
+            pages.push(pageData);
+            onProgress?.(pageData, pages.length + errors.length, queue.length);
+          } catch (err: any) {
+            const errorMsg = err?.message || String(err);
+            errors.push({ url: item.url, depth: item.depth, error: errorMsg });
+            const failedPage: PageData = {
+              url: item.url,
+              depth: item.depth,
+              title: 'Error',
+              status: 0,
+              links: [],
+              error: errorMsg,
+            };
+            pages.push(failedPage);
+            onProgress?.(failedPage, pages.length + errors.length, queue.length);
+          } finally {
+            activeWorkers--;
+          }
+        }
+      };
+
+      const workers: Promise<void>[] = [];
+      for (let i = 0; i < concurrency; i++) {
+        workers.push(runWorker());
+      }
+
+      await Promise.all(workers);
+
+      // Notify plugins onComplete
+      for (const plugin of this.plugins) {
+        await plugin.onComplete?.();
+      }
+
+      return {
+        startUrl: this.options.startUrl,
+        totalDurationMs: Date.now() - startTime,
+        pages,
+        errors,
+      };
+    } finally {
+      this.isAborted = false;
+      // Shut down browser if we created it internally (not injected by REPL/tests)
+      // Guaranteeing cleanup even when an unhandled error or abort occurs
+      if (!this.persistentBrowser) {
+        await this.browserManager.close();
+      }
     }
-
-    await Promise.all(workers);
-
-    // Notify plugins onComplete
-    for (const plugin of this.plugins) {
-      await plugin.onComplete?.();
-    }
-
-    // Shut down browser if we created it internally (not injected by REPL/tests)
-    if (!this.persistentBrowser) {
-      await this.browserManager.close();
-    }
-
-    return {
-      startUrl: this.options.startUrl,
-      totalDurationMs: Date.now() - startTime,
-      pages,
-      errors,
-    };
   }
 
   /**

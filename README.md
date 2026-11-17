@@ -19,6 +19,8 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 - **Depth-Controlled BFS Crawler**: Crawl any web application with configurable depth ($1 \le N \le 5$). Includes URL normalization, deduplication, and same-origin filtering.
 - **Full-Page DOM Screenshots**: Automatically captures visual layouts and full-page rendering using Playwright headless automation.
 - **Markdown Content Extraction**: Converts raw HTML DOM structures into clean, readable Markdown and structured JSON metadata (title, description, headings, link graph).
+- **Interactive Visual HTML Dashboard**: Generates a standalone, dark-themed responsive `report.html` dashboard with visual cards, search filtering, and zoom lightboxes.
+- **Zero Orphaned Process Guarantee**: Centralized `BrowserManager` registry and automated process termination signal hooks (`SIGINT`, `SIGTERM`, `SIGHUP`, `beforeExit`) with timeout safeguards ensure Chromium instances are never left running or orphaned in the background.
 - **Extensible Plugin Architecture**: Built on an asynchronous lifecycle hook system (`onPageLoad`, `onScreenshot`, `onExtract`, `onAnalyze`) ready for future plugins like accessibility auditing (WCAG via `@axe-core/playwright`), SEO audits, and performance profiling.
 - **Dual CLI & Library**: Use directly from your terminal or import programmatically into your Node.js/TypeScript applications.
 
@@ -231,6 +233,16 @@ async function main() {
 
 main();
 ```
+
+---
+
+## 🛡️ Reliability & Zero Orphaned Browsers
+
+Dasyu is architected for strict process isolation and production reliability:
+- **Centralized Registry**: Every browser launched across CLI, REPL, Auth Bridge, and MCP is registered in `BrowserManager.activeManagers`.
+- **Guaranteed Cleanup via `try ... finally`**: Crawlers, interactive logins, and snapshot extractors wrap browser operations in strict `finally` blocks, ensuring resources are released even if plugins crash, network connections drop, or navigation times out.
+- **Process Signal Hooks**: Automated hooks for `SIGINT` (Ctrl+C), `SIGTERM`, `SIGHUP`, and Node.js `beforeExit` gracefully terminate all active browser contexts and force-reap child Chromium processes with a timeout safeguard before the process exits.
+- **Abortable Crawlers**: Crawlers provide `crawler.abort()` and `crawler.close()` methods for immediate and clean worker cancellation.
 
 ---
 

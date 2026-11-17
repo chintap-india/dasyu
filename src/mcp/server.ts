@@ -14,10 +14,19 @@ import pkg from '../../package.json';
  * autonomously invoke Dasyu crawling, DOM snapshotting, and auth inspection.
  */
 export async function startMcpServer(): Promise<void> {
+  BrowserManager.registerExitHandlers();
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     terminal: false,
+  });
+
+  rl.on('close', async () => {
+    await BrowserManager.closeAll();
+    if (!process.env.VITEST && process.env.NODE_ENV !== 'test') {
+      process.exit(0);
+    }
   });
 
   const send = (message: any) => {
@@ -176,45 +185,47 @@ export async function startMcpServer(): Promise<void> {
 
         if (toolName === 'dasyu_snapshot') {
           const browserManager = new BrowserManager({ headless: true, storageState: args.auth });
-          const page = await browserManager.acquirePage();
-          const outputDir = args.outputDir || './output';
+          try {
+            const page = await browserManager.acquirePage();
+            const outputDir = args.outputDir || './output';
 
-          await page.goto(args.url, { waitUntil: 'networkidle', timeout: 30000 }).catch(() =>
-            page.goto(args.url, { waitUntil: 'load', timeout: 30000 })
-          );
-          await page.waitForTimeout(1000);
+            await page.goto(args.url, { waitUntil: 'networkidle', timeout: 30000 }).catch(() =>
+              page.goto(args.url, { waitUntil: 'load', timeout: 30000 })
+            );
+            await page.waitForTimeout(1000);
 
-          const title = await page.title();
-          const screenshotPath = await captureScreenshot(page, args.url, outputDir);
-          let contentResult;
-          if (args.extractContent !== false) {
-            contentResult = await extractPageContent(page, args.url, outputDir);
+            const title = await page.title();
+            const screenshotPath = await captureScreenshot(page, args.url, outputDir);
+            let contentResult;
+            if (args.extractContent !== false) {
+              contentResult = await extractPageContent(page, args.url, outputDir);
+            }
+
+            send({
+              jsonrpc: '2.0',
+              id,
+              result: {
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify(
+                      {
+                        success: true,
+                        url: args.url,
+                        title,
+                        screenshotPath,
+                        contentPath: contentResult?.contentPath,
+                      },
+                      null,
+                      2
+                    ),
+                  },
+                ],
+              },
+            });
+          } finally {
+            await browserManager.close();
           }
-
-          await browserManager.close();
-
-          send({
-            jsonrpc: '2.0',
-            id,
-            result: {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(
-                    {
-                      success: true,
-                      url: args.url,
-                      title,
-                      screenshotPath,
-                      contentPath: contentResult?.contentPath,
-                    },
-                    null,
-                    2
-                  ),
-                },
-              ],
-            },
-          });
           return;
         }
 
