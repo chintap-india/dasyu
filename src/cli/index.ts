@@ -11,6 +11,7 @@ import { createAccessibilityPlugin } from '../plugins/accessibility';
 import { exportRagChunks } from '../core/rag';
 import { exportSiteGraph } from '../core/graph';
 import { generateHtmlReport, openTarget } from '../core/report';
+import { exportDashboardZip } from '../core/zip';
 import { startMcpServer } from '../mcp/server';
 import { startRepl } from './repl';
 import { logger } from './logger';
@@ -157,6 +158,7 @@ export async function main(): Promise<void> {
     .option('--graph', 'Generate site link graph and Mermaid architecture diagram', false)
     .option('--delay <ms>', 'Delay in milliseconds between page navigations (rate limiting)')
     .option('--dismiss-modals', 'Automatically detect and dismiss cookie consent dialogs and modals', false)
+    .option('--zip', 'Export full HTML report and domain assets to a portable ZIP archive', false)
     .option('-O, --open', 'Automatically open visual HTML report in your default browser upon completion', false)
     .action(async (url, opts) => {
       const depth = parseInt(opts.depth, 10) || 1;
@@ -218,12 +220,35 @@ export async function main(): Promise<void> {
           logger.info(`  🌐 Site Graph:  Saved ${pc.cyan(graphPaths.graphJsonPath)} & ${pc.cyan(graphPaths.mermaidPath)}`);
         }
 
+        // Determine domain name for report bundle
+        let domainName: string | undefined;
+        try {
+          const parsed = new URL(url);
+          domainName = parsed.hostname;
+        } catch {}
+
+        const zipFileName = domainName ? `${domainName}-report.zip` : 'dasyu-report.zip';
+
         // Generate the standalone, interactive visual HTML dashboard
         const reportPath = await generateHtmlReport(result, {
           outputDir: outDir,
           ragChunksCount,
           siteGraphMermaidPath: graphPaths?.mermaidPath,
+          zipFileName: opts.zip ? zipFileName : undefined,
         });
+
+        let zipResult: { zipPath: string; totalFiles: number; sizeBytes: number } | undefined;
+        if (opts.zip) {
+          try {
+            zipResult = await exportDashboardZip(outDir, {
+              domain: domainName,
+              customZipName: zipFileName,
+            });
+            logger.info(`  📦 ZIP Export:   ${pc.bold(zipResult.totalFiles.toString())} files bundled to ${pc.cyan(zipResult.zipPath)} (${(zipResult.sizeBytes / 1024 / 1024).toFixed(2)} MB)`);
+          } catch (zipErr: any) {
+            logger.warn(`Could not generate ZIP archive: ${zipErr.message || String(zipErr)}`);
+          }
+        }
 
         const resolvedOutDir = path.resolve(process.cwd(), outDir);
         const resolvedReportPath = path.resolve(process.cwd(), reportPath);
@@ -233,10 +258,16 @@ export async function main(): Promise<void> {
         console.log(`  📊 Total Pages:   ${pc.bold(result.pages.length.toString())}`);
         console.log(`  📁 Output Dir:    ${pc.bold(logger.tomato(outDir))} (${resolvedOutDir})`);
         console.log(`  🌐 Visual Report: ${pc.bold(pc.cyan(fileUrl))}`);
+        if (zipResult) {
+          console.log(`  📦 ZIP Bundle:    ${pc.bold(pc.magenta(zipResult.zipPath))}`);
+        }
 
         // UX Next Steps Guide
         console.log(`\n${pc.bold(logger.tomato('🧭 Next Steps & Quick Navigation:'))}`);
         console.log(`  • View visual report:   ${pc.green(`dasyu view ${outDir}`)}  ${pc.gray(`(or CMD+Click the file:// link above)`)}`);
+        if (zipResult) {
+          console.log(`  • Share ZIP archive:    ${pc.magenta(`open "${zipResult.zipPath}"`)}`);
+        }
         console.log(`  • Reveal in Finder:     ${pc.cyan(`open "${resolvedOutDir}"`)}`);
         console.log(`  • Terminal inspection:  ${pc.yellow(`cd "${outDir}" && ls -lh`)}\n`);
 
@@ -278,6 +309,30 @@ export async function main(): Promise<void> {
       } else {
         logger.info(`🌐 Opening in browser: ${pc.cyan(targetToOpen)}`);
         await openTarget(targetToOpen);
+      }
+    });
+
+  program
+    .command('zip [dir]')
+    .alias('export')
+    .description('Export the visual HTML report and domain screenshots/content into a portable ZIP archive')
+    .option('-o, --output <path>', 'Custom destination path or filename for the ZIP archive')
+    .option('--domain <name>', 'Specific domain subfolder to bundle')
+    .action(async (dirStr = './output', opts) => {
+      const targetDir = path.resolve(process.cwd(), dirStr);
+      try {
+        const result = await exportDashboardZip(targetDir, {
+          domain: opts.domain,
+          destinationPath: opts.output,
+        });
+        logger.success(`\n📦 Dashboard ZIP archive created successfully!`);
+        console.log(`  📁 Archive:   ${pc.bold(pc.cyan(result.zipPath))}`);
+        console.log(`  📄 Files:     ${pc.bold(result.totalFiles.toString())}`);
+        console.log(`  💾 Size:      ${pc.bold((result.sizeBytes / 1024 / 1024).toFixed(2))} MB\n`);
+        process.exit(0);
+      } catch (err: any) {
+        logger.error(`Export failed: ${err.message || String(err)}`);
+        process.exit(1);
       }
     });
 
