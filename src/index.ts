@@ -14,6 +14,13 @@ export {
   createBrowsePlugin,
   type BrowsePluginOptions,
 } from './plugins/browse';
-export { captureScreenshot, sanitizeUrlToFilename } from './extractors/screenshot';
+export {
+  SeoAuditPlugin,
+  createSeoPlugin,
+  type SeoAuditReport,
+  type SeoPluginOptions,
+} from './plugins/seo';
+export { startMcpServer } from './mcp/server';
+export { captureScreenshot, sanitizeUrlToFilename, dismissCookieBanners } from './extractors/screenshot';
 export { extractPageContent, type ExtractedContentResult } from './extractors/content';
 

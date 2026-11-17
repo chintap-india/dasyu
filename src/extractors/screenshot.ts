@@ -92,6 +92,51 @@ function hashCode(str: string): number {
 }
 
 /**
+ * Attempts to automatically locate and dismiss cookie consent dialogs, GDPR banners,
+ * and modal overlays that might obstruct snapshots or clutter extracted content.
+ */
+export async function dismissCookieBanners(page: Page): Promise<boolean> {
+  try {
+    return await page.evaluate(() => {
+      const candidateSelectors = [
+        '#onetrust-accept-btn-handler',
+        '.cookie-consent-accept',
+        '#cookie-accept',
+        '[aria-label*="cookie" i] button',
+        '[class*="cookie" i] button',
+        '[id*="cookie" i] button',
+        'button[data-testid*="cookie" i]',
+        'button[id*="accept" i]',
+        'button[class*="accept" i]',
+      ];
+
+      for (const selector of candidateSelectors) {
+        const el = document.querySelector(selector) as HTMLElement | null;
+        if (el && typeof el.click === 'function' && el.offsetParent !== null) {
+          el.click();
+          return true;
+        }
+      }
+
+      // Check buttons for common accept / agreement text
+      const buttons = Array.from(document.querySelectorAll('button, a[role="button"]'));
+      for (const b of buttons) {
+        const text = (b.textContent || '').trim().toLowerCase();
+        if (/^(accept|accept all|i agree|got it|agree & close|dismiss|close)$/i.test(text)) {
+          if ((b as HTMLElement).offsetParent !== null) {
+            (b as HTMLElement).click();
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Captures a full-page DOM screenshot of the current page and saves it to disk.
  * Automatically scrolls to bottom and back to top first to trigger lazy-loaded SPA content.
  * @returns The file path where the screenshot was saved.

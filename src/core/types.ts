@@ -21,6 +21,12 @@ export interface CrawlOptions {
   debug?: boolean;
   /** Optional Playwright storageState file path or object (cookies, localStorage) for authenticated crawling. */
   storageState?: string | Record<string, any>;
+  /** Optional delay (in milliseconds) before navigating each page, useful for throttling and rate-limit avoidance. */
+  delay?: number;
+  /** Automatically scroll page down to trigger lazy loading, infinite scroll, and dynamic assets before capturing. */
+  scroll?: boolean;
+  /** Automatically attempt to detect and dismiss cookie consent banners and modal overlays. */
+  dismissModals?: boolean;
   /** Optional array of plugins for lifecycle hook extensions (e.g., accessibility auditing). */
   plugins?: DasyuPlugin[];
 }

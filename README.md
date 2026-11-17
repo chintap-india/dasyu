@@ -74,6 +74,10 @@ dasyu clean ./my-snapshots
 | `--auth <path>` | Alias for `-s, --storage-state` | `undefined` |
 | `--content` | Extract clean Markdown content & JSON metadata | `false` |
 | `--allow-external` | Allow crawling links outside starting domain | `false` |
+| `--detect-auth` | Enable Anomalyco Browse plugin to monitor auth walls | `false` |
+| `--seo` | Enable built-in SEO and metadata quality audit plugin | `false` |
+| `--delay <ms>` | Throttling delay between page requests in milliseconds | `undefined` |
+| `--dismiss-modals` | Detect & auto-dismiss cookie banners & dialogs | `false` |
 | `--debug` | Enable verbose debug logging | `false` |
 
 ---
@@ -193,25 +197,58 @@ main();
 
 ---
 
+## 🤖 Model Context Protocol (MCP) Server for AI Agents
+
+Dasyu includes a native **Model Context Protocol (MCP)** server over standard I/O (`stdio`), allowing AI coding agents (such as Antigravity, Claude Code, Cursor, OpenCode, Codex) to invoke deep crawling and visual snapshotting natively as tool calls.
+
+### Launching the MCP Server
+```bash
+# Launch directly via CLI
+dasyu mcp
+
+# Or via the standalone bin executable
+node ./bin/dasyu-mcp.js
+```
+
+### Agent Configuration Example
+Add Dasyu to your agent's MCP settings (e.g. `.gemini/settings.json`, `claude_desktop_config.json`, or `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "dasyu": {
+      "command": "node",
+      "args": ["/absolute/path/to/dasyu/bin/dasyu-mcp.js"]
+    }
+  }
+}
+```
+
+Available MCP tools:
+- **`dasyu_crawl`**: Recursively crawls a target web app up to $N$ levels deep, captures DOM snapshots, extracts Markdown, and returns structured page summaries.
+- **`dasyu_snapshot`**: Captures a one-off full-page screenshot and clean Markdown for any single URL.
+- **`dasyu_inspect_auth`**: Inspects cookies, active domains, and expiration dates in a `storageState` JSON file.
+
+---
+
 ## 🗺️ Roadmap & Future Plans
 
-### 📦 NPM Package Publishing & Versioning
-We are holding official NPM registry publishing until full beta testing and SPA test coverage are completed. Once ready, version management and publishing will be handled via:
-```bash
-# Bump patch version (e.g. 0.1.0 -> 0.1.1) and push tags
-npm run bump:patch
+### 🏢 Organization Migration (`chintap-india`)
+Once the application undergoes full dogfooding and hardening across internal threads, the repository will officially migrate under the **`chintap-india`** GitHub organization (`github.com/chintap-india/dasyu`).
 
-# Bump minor or major version
+### 📦 Hardening & NPM Registry Publishing
+Public NPM publishing (`npm i -g dasyu`) is intentionally held while we dogfood Dasyu across internal web apps built in other threads. Releases and version bumps follow semantic versioning:
+```bash
+# Bump patch or minor version
+npm run bump:patch
 npm run bump:minor
-npm run bump:major
 ```
 
 ### 🔌 Extensible Plugin Architecture
-Dasyu is designed to be easily extensible without modifying the core crawler engine:
-- **`onPageLoad(page, url, depth)`**: Hook invoked after page navigation settles.
-- **`onScreenshot(page, screenshotPath)`**: Hook invoked after full-page snapshot is captured.
-- **`onExtract(page, content)`**: Hook invoked after DOM extraction.
-- **`onAnalyze(page, results)`**: Hook invoked for custom analytical plugins (e.g., WCAG accessibility violations, Lighthouse scores, broken link detection).
+- **`Anomalyco Browse Plugin`** (`--detect-auth`): ✅ Completed (monitors login barriers and redirects).
+- **`SEO & Quality Audit Plugin`** (`--seo`): ✅ Completed (audits headings, meta tags, and alt attributes).
+- **`Accessibility (WCAG) Plugin`**: Hooking `@axe-core/playwright` into `onAnalyze` for automated WCAG 2.1 compliance audits.
+- **`Vector Store Exporter`**: Direct export of extracted Markdown into chunked embeddings for RAG pipelines (Chroma, LanceDB).
 
 ---
 

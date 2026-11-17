@@ -4,6 +4,8 @@ import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
 import { createBrowsePlugin } from '../plugins/browse';
+import { createSeoPlugin } from '../plugins/seo';
+import { startMcpServer } from '../mcp/server';
 import { startRepl } from './repl';
 import { logger } from './logger';
 import pkg from '../../package.json';
@@ -131,16 +133,23 @@ export async function main(): Promise<void> {
     .option('--content', 'Extract markdown content and JSON metadata', false)
     .option('--allow-external', 'Allow crawling external domains', false)
     .option('--detect-auth', 'Enable Anomalyco Browse plugin to monitor and alert on auth walls', false)
+    .option('--seo', 'Enable SEO and metadata quality audit plugin', false)
+    .option('--delay <ms>', 'Delay in milliseconds between page navigations (rate limiting)')
+    .option('--dismiss-modals', 'Automatically detect and dismiss cookie consent dialogs and modals', false)
     .action(async (url, opts) => {
       const depth = parseInt(opts.depth, 10) || 1;
       const concurrency = parseInt(opts.concurrency, 10) || 3;
       const storageState = opts.storageState || opts.auth;
+      const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
 
       logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
       const plugins = [];
       if (opts.detectAuth) {
         plugins.push(createBrowsePlugin({ sessionState: storageState }));
+      }
+      if (opts.seo) {
+        plugins.push(createSeoPlugin());
       }
 
       const crawler = new DasyuCrawler({
@@ -151,6 +160,8 @@ export async function main(): Promise<void> {
         extractContent: Boolean(opts.content),
         allowExternal: Boolean(opts.allowExternal),
         storageState,
+        delay,
+        dismissModals: Boolean(opts.dismissModals),
         plugins,
       });
 
@@ -175,6 +186,13 @@ export async function main(): Promise<void> {
         logger.error(`Fatal error during crawl: ${err?.message || String(err)}`);
         process.exit(1);
       }
+    });
+
+  program
+    .command('mcp')
+    .description('Start the Dasyu Model Context Protocol (MCP) server over stdio for AI coding agents')
+    .action(async () => {
+      await startMcpServer();
     });
 
   await program.parseAsync(process.argv);

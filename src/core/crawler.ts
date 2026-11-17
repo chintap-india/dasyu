@@ -2,7 +2,7 @@ import type { Page } from 'playwright';
 import type { CrawlOptions, CrawlResult, PageContext, PageData } from './types';
 import type { DasyuPlugin } from '../plugins/base';
 import { BrowserManager } from './browser';
-import { captureScreenshot } from '../extractors/screenshot';
+import { captureScreenshot, dismissCookieBanners } from '../extractors/screenshot';
 import { extractPageContent } from '../extractors/content';
 
 /**
@@ -185,10 +185,19 @@ export class DasyuCrawler {
     };
 
     try {
+      if (this.options.delay && this.options.delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, this.options.delay));
+      }
+
       const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 }).catch(async () => {
         return page.goto(url, { waitUntil: 'load', timeout: 30000 });
       });
       await page.waitForTimeout(1000);
+
+      if (this.options.dismissModals) {
+        await dismissCookieBanners(page);
+      }
+
       pageData.status = response?.status() || 200;
       pageData.title = (await page.title()) || url;
 
