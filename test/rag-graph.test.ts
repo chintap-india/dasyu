@@ -78,4 +78,25 @@ describe('RAG and Site Graph Exporters', () => {
     expect(mmdContent).toContain('graph TD');
     expect(mmdContent).toContain('-->');
   });
+
+  it('should handle pages without contentPath or empty lists in exportRagChunks', async () => {
+    const pages: PageData[] = [
+      {
+        url: 'https://example.com/no-content',
+        depth: 0,
+        title: 'No Content',
+        status: 200,
+        links: [],
+      },
+    ];
+
+    const result = await exportRagChunks(pages, { outputPath: path.join(tmpDir, 'empty.jsonl') });
+    expect(result.chunksCount).toBe(0);
+  });
+
+  it('should export empty site graph gracefully when 0 pages are passed', async () => {
+    const result = await exportSiteGraph([], tmpDir);
+    expect(result.graph.nodes).toHaveLength(0);
+    expect(result.graph.edges).toHaveLength(0);
+  });
 });

@@ -30,4 +30,10 @@ describe('AccessibilityPlugin', () => {
     const analysis = await plugin.onAnalyze(ctx);
     expect(analysis.accessibilityAudit).toBeDefined();
   });
+
+  it('should accept custom WCAG tags', () => {
+    const plugin = new AccessibilityPlugin({ tags: ['wcag2aaa'], logWarnings: false });
+    expect(plugin).toBeDefined();
+    expect(plugin.name).toBe('accessibility-audit');
+  });
 });

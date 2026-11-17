@@ -96,4 +96,34 @@ describe('AnomalyBrowsePlugin', () => {
     const analysis = await plugin.onAnalyze(ctx);
     expect(analysis.anomalyBrowse.authWallDetected).toBe(false);
   });
+
+  it('should support customAuthPatterns and onStart session inspection', async () => {
+    const customPattern = /portal-gatekeeper/i;
+    const plugin = new AnomalyBrowsePlugin({
+      sessionState: { cookies: [{ name: 'sess', value: '1', domain: 'example.com' }] },
+      customAuthPatterns: [customPattern],
+      exportSessionPath: './output/exported-auth.json',
+    });
+
+    await expect(plugin.onStart()).resolves.toBeUndefined();
+    await expect(plugin.onComplete()).resolves.toBeUndefined();
+
+    const ctx: PageContext = {
+      page: {} as any,
+      url: 'https://example.com/app/portal-gatekeeper',
+      depth: 1,
+      options: { startUrl: 'https://example.com' },
+      data: {
+        url: 'https://example.com/app/portal-gatekeeper',
+        depth: 1,
+        title: 'Custom Portal',
+        status: 200,
+        links: [],
+      },
+    };
+
+    await plugin.onPageLoad(ctx);
+    expect(ctx.data.metadata?.authWallDetected).toBe(true);
+    expect(ctx.data.metadata?.authWallReason).toContain('portal-gatekeeper');
+  });
 });

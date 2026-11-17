@@ -65,4 +65,20 @@ describe('Auth Bridge & Session Normalization', () => {
     expect(summary.domains).toContain('beta.com');
     expect(summary.expiredCookies).toBe(1);
   });
+
+  it('should throw an error for unrecognized session formats in importBrowseSession', async () => {
+    await expect(importBrowseSession('invalid string content', tmpAuthJson)).rejects.toThrow();
+    await expect(importBrowseSession({ invalidKey: 123 }, tmpAuthJson)).rejects.toThrow(
+      'Unrecognized session format'
+    );
+  });
+
+  it('should handle empty storageState gracefully in inspectStorageState', async () => {
+    const emptyState = {};
+    const summary = await inspectStorageState(emptyState);
+    expect(summary.cookiesCount).toBe(0);
+    expect(summary.originsCount).toBe(0);
+    expect(summary.domains).toHaveLength(0);
+    expect(summary.expiredCookies).toBe(0);
+  });
 });
