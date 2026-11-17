@@ -80,6 +80,16 @@ dasyu crawl https://today.chintap.com --auth ./auth.json --depth 2 --content
 # Specify concurrency limit (default is 3 parallel pages)
 dasyu crawl https://chintap.com --depth 2 --concurrency 5 --content
 
+# Crawl and automatically open the interactive visual report in your browser
+dasyu crawl https://chintap.com --depth 1 --content --a11y --seo --open
+
+# Open the visual HTML crawl report or screenshots from any previous crawl
+dasyu view
+# Or view a specific output directory:
+dasyu view ./demo-output/chintap
+# Or reveal the output folder in macOS Finder / system file explorer:
+dasyu view ./demo-output/chintap --finder
+
 # Clean/reset generated output folders (wipes ./output and ./results by default)
 dasyu clean
 # Or clean a specific directory:
@@ -93,12 +103,16 @@ dasyu clean ./my-snapshots
 | `-d, --depth <number>` | Crawl depth ($1 \le N \le 5$) | `1` |
 | `-c, --concurrency <number>` | Max parallel browser pages | `3` |
 | `-o, --output <dir>` | Output directory for screenshots & content | `./output` |
+| `-O, --open` | Automatically open visual HTML report in default browser upon completion | `false` |
 | `-s, --storage-state <path>` | Playwright `storageState` JSON path (cookies, localStorage) | `undefined` |
 | `--auth <path>` | Alias for `-s, --storage-state` | `undefined` |
 | `--content` | Extract clean Markdown content & JSON metadata | `false` |
 | `--allow-external` | Allow crawling links outside starting domain | `false` |
 | `--detect-auth` | Enable Anomalyco Browse plugin to monitor auth walls | `false` |
 | `--seo` | Enable built-in SEO and metadata quality audit plugin | `false` |
+| `--a11y` | Enable Axe-core WCAG 2.1 accessibility compliance audit plugin | `false` |
+| `--rag` | Export extracted markdown to chunked JSONL for vector databases | `false` |
+| `--graph` | Generate site link graph JSON and Mermaid flowchart diagram | `false` |
 | `--delay <ms>` | Throttling delay between page requests in milliseconds | `undefined` |
 | `--dismiss-modals` | Detect & auto-dismiss cookie banners & dialogs | `false` |
 | `--debug` | Enable verbose debug logging | `false` |

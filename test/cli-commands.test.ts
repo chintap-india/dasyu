@@ -104,5 +104,13 @@ describe('Dasyu CLI Subcommands & Execution', () => {
     expect(stdout).toContain('--dismiss-modals');
     expect(stdout).toContain('--detect-auth');
     expect(stdout).toContain('--seo');
+    expect(stdout).toContain('--open');
+  });
+
+  it('should print view command help and options', async () => {
+    const { stdout } = await execFileAsync(process.execPath, [cliBin, 'view', '--help']);
+    expect(stdout).toContain('view');
+    expect(stdout).toContain('[dir]');
+    expect(stdout).toContain('--finder');
   });
 });

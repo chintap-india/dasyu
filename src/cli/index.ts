@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
@@ -8,6 +9,7 @@ import { createSeoPlugin } from '../plugins/seo';
 import { createAccessibilityPlugin } from '../plugins/accessibility';
 import { exportRagChunks } from '../core/rag';
 import { exportSiteGraph } from '../core/graph';
+import { generateHtmlReport, openTarget } from '../core/report';
 import { startMcpServer } from '../mcp/server';
 import { startRepl } from './repl';
 import { logger } from './logger';
@@ -142,6 +144,7 @@ export async function main(): Promise<void> {
     .option('--graph', 'Generate site link graph and Mermaid architecture diagram', false)
     .option('--delay <ms>', 'Delay in milliseconds between page navigations (rate limiting)')
     .option('--dismiss-modals', 'Automatically detect and dismiss cookie consent dialogs and modals', false)
+    .option('-O, --open', 'Automatically open visual HTML report in your default browser upon completion', false)
     .action(async (url, opts) => {
       const depth = parseInt(opts.depth, 10) || 1;
       const concurrency = parseInt(opts.concurrency, 10) || 3;
@@ -185,22 +188,48 @@ export async function main(): Promise<void> {
           }
         });
 
-        logger.success(`\nCrawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s!`);
-        console.log(`  📊 Total Pages: ${pc.bold(result.pages.length.toString())}`);
-        console.log(`  📁 Output Dir:  ${pc.bold(logger.tomato(outDir))}`);
-
         // Handle optional RAG chunk export
+        let ragChunksCount: number | undefined;
         if (opts.rag && opts.content) {
           const ragResult = await exportRagChunks(result.pages, {
             outputPath: `${outDir}/rag-chunks.jsonl`,
           });
+          ragChunksCount = ragResult.chunksCount;
           logger.info(`  🧠 RAG Export:  ${pc.bold(ragResult.chunksCount.toString())} chunks saved to ${pc.cyan(ragResult.outputPath)}`);
         }
 
         // Handle optional Link Graph export
+        let graphPaths: { graphJsonPath: string; mermaidPath: string } | undefined;
         if (opts.graph) {
-          const graphResult = await exportSiteGraph(result.pages, outDir);
-          logger.info(`  🌐 Site Graph:  Saved ${pc.cyan(graphResult.graphJsonPath)} & ${pc.cyan(graphResult.mermaidPath)}`);
+          graphPaths = await exportSiteGraph(result.pages, outDir);
+          logger.info(`  🌐 Site Graph:  Saved ${pc.cyan(graphPaths.graphJsonPath)} & ${pc.cyan(graphPaths.mermaidPath)}`);
+        }
+
+        // Generate the standalone, interactive visual HTML dashboard
+        const reportPath = await generateHtmlReport(result, {
+          outputDir: outDir,
+          ragChunksCount,
+          siteGraphMermaidPath: graphPaths?.mermaidPath,
+        });
+
+        const resolvedOutDir = path.resolve(process.cwd(), outDir);
+        const resolvedReportPath = path.resolve(process.cwd(), reportPath);
+        const fileUrl = `file://${resolvedReportPath}`;
+
+        logger.success(`\nCrawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s!`);
+        console.log(`  📊 Total Pages:   ${pc.bold(result.pages.length.toString())}`);
+        console.log(`  📁 Output Dir:    ${pc.bold(logger.tomato(outDir))} (${resolvedOutDir})`);
+        console.log(`  🌐 Visual Report: ${pc.bold(pc.cyan(fileUrl))}`);
+
+        // UX Next Steps Guide
+        console.log(`\n${pc.bold(logger.tomato('🧭 Next Steps & Quick Navigation:'))}`);
+        console.log(`  • View visual report:   ${pc.green(`dasyu view ${outDir}`)}  ${pc.gray(`(or CMD+Click the file:// link above)`)}`);
+        console.log(`  • Reveal in Finder:     ${pc.cyan(`open "${resolvedOutDir}"`)}`);
+        console.log(`  • Terminal inspection:  ${pc.yellow(`cd "${outDir}" && ls -lh`)}\n`);
+
+        if (opts.open) {
+          logger.info(`🚀 Opening visual report in default browser...`);
+          await openTarget(resolvedReportPath);
         }
 
         if (result.errors.length > 0) {
@@ -210,6 +239,31 @@ export async function main(): Promise<void> {
       } catch (err: any) {
         logger.error(`Fatal error during crawl: ${err?.message || String(err)}`);
         process.exit(1);
+      }
+    });
+
+  program
+    .command('view [dir]')
+    .aliases(['open', 'show'])
+    .description('Open the visual HTML crawl report or screenshots folder in your default browser or Finder')
+    .option('-f, --finder', 'Reveal output folder in Finder / file explorer instead of opening browser', false)
+    .action(async (dirStr = './output', opts) => {
+      const targetDir = path.resolve(process.cwd(), dirStr);
+      const reportFile = path.join(targetDir, 'report.html');
+
+      let targetToOpen = reportFile;
+      try {
+        await fs.access(reportFile);
+      } catch {
+        targetToOpen = targetDir;
+      }
+
+      if (opts.finder) {
+        logger.info(`📂 Revealing folder in file explorer: ${pc.cyan(targetDir)}`);
+        await openTarget(targetDir);
+      } else {
+        logger.info(`🌐 Opening in browser: ${pc.cyan(targetToOpen)}`);
+        await openTarget(targetToOpen);
       }
     });
 

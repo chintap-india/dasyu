@@ -1,9 +1,11 @@
 import readline from 'node:readline';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import pc from 'picocolors';
 import { DasyuCrawler } from '../core/crawler';
 import { BrowserManager } from '../core/browser';
 import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
+import { generateHtmlReport, openTarget } from '../core/report';
 import type { CrawlOptions, PageData } from '../core/types';
 import { logger } from './logger';
 import { captureScreenshot } from '../extractors/screenshot';
@@ -126,8 +128,13 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           });
 
           sessionPages.push(...result.pages);
+          const reportPath = await generateHtmlReport(result, { outputDir: crawlOpts.outputDir! });
+          const resolvedReport = path.resolve(process.cwd(), reportPath);
+
           logger.success(`Crawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s! Captured ${result.pages.length} pages.`);
-          console.log(`  📁 Screenshots & Content saved to: ${pc.bold(logger.tomato(crawlOpts.outputDir!))}`);
+          console.log(`  📁 Output Dir:    ${pc.bold(logger.tomato(crawlOpts.outputDir!))}`);
+          console.log(`  🌐 Visual Report: ${pc.bold(pc.cyan(`file://${resolvedReport}`))}`);
+          console.log(`  💡 Run "${pc.green('view')}" or "${pc.green('open')}" to inspect screenshots in your browser.\n`);
           break;
         }
 
@@ -329,6 +336,21 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           break;
         }
 
+        case 'view':
+        case 'open': {
+          const targetDir = path.resolve(process.cwd(), args[0] || options.outputDir || './output');
+          const reportFile = path.join(targetDir, 'report.html');
+          let targetToOpen = reportFile;
+          try {
+            await fs.access(reportFile);
+          } catch {
+            targetToOpen = targetDir;
+          }
+          logger.info(`Opening ${pc.cyan(targetToOpen)} in browser...`);
+          await openTarget(targetToOpen);
+          break;
+        }
+
         case 'clear':
         case 'cls':
           console.clear();
@@ -377,6 +399,7 @@ function printHelp(): void {
   console.log(`    ${pc.dim('auth clear               — Clear active authentication session')}`);
   console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth)`);
   console.log(`  ${pc.cyan('clean [dir]')}            Clean/reset output directory & clear session pages (${pc.dim('alias: reset')})`);
+  console.log(`  ${pc.cyan('view [dir]')}             Open visual HTML report or screenshots in browser (${pc.dim('alias: open')})`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
   console.log(`  ${pc.cyan('exit')}                   Close browser and exit REPL\n`);
 }
