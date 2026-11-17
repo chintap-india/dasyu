@@ -121,6 +121,53 @@ dasyu clean ./my-snapshots
 
 ---
 
+## 📊 Interactive Visual HTML Dashboard
+
+Every Dasyu crawl automatically generates a standalone, zero-dependency dark-mode **`report.html`** dashboard. Inspect crawl health, browse full-page screenshots, search pages in real-time, view extracted Markdown, and zoom in on visual artifacts with zero external network dependencies.
+
+<p align="center">
+  <img src="./assets/dasyu-ui-dashboard.png" alt="Dasyu Interactive Visual HTML Dashboard — chintap.com Crawl Report" width="100%" />
+</p>
+
+### Dashboard Capabilities
+
+- **Master Brand Header**: Displays the official Outlaw emblem lockup, active target URL pill with glowing live indicator (`• https://chintap.com`), and crawl timestamp.
+- **KPI Summary Cards**: Real-time counter metrics highlighting **Pages Crawled**, **Total Duration**, **Avg A11y Score** (when `--a11y` is passed), and **RAG Chunks** (when `--rag` is passed).
+- **Instant Search & Filter Bar**: Instant client-side search filtering by page title or URL with dynamic counter badges (`Showing 10 of 10 pages`).
+- **Interactive Page Cards**:
+  - **HTTP Status Badges**: Color-coded badges (`200 OK` in green, redirects in amber, errors in red).
+  - **BFS Depth Badges**: Clear depth tracking tags (`Depth 0`, `Depth 1`).
+  - **Direct Live Link**: One-click external navigation to live URL (`↗`).
+  - **Link Counts**: Detected internal & external anchor count pill (`🔗 10 links`).
+  - **Responsive Snapshot Previews**: Full-page screenshot cards with hover affordance (`Click to expand full-page screenshot`).
+  - **Action Controls**:
+    - **Open Image ↗**: View full-resolution screenshot directly.
+    - **View Markdown**: Open modal lightbox displaying extracted Markdown text, article headings, and readability metrics.
+- **Portable & Self-Contained**: The dashboard is generated as a single HTML file with embedded styles and fonts—perfect for sharing with teams, attaching to CI/CD artifacts, or publishing to static hosting.
+
+To automatically open the report immediately after a crawl completes:
+```bash
+dasyu crawl https://chintap.com --open
+# Or view any existing report:
+dasyu view ./output
+```
+
+---
+
+## 📸 Example Captured Snapshots (`chintap.com`)
+
+Dasyu handles complex client-side rendered Single Page Applications, CSS animations, and modern typography out of the box. Below are real full-page snapshots automatically captured during a live depth-controlled crawl of [chintap.com](https://chintap.com):
+
+| Page | Captured DOM Snapshot | Extracted Artifacts |
+| :--- | :--- | :--- |
+| **Homepage**<br>`https://chintap.com/` | <a href="./assets/examples/chintap-home.png"><img src="./assets/examples/chintap-home.png" width="400" alt="chintap.com Homepage Snapshot" /></a> | • Status: `200 OK` (Depth 0)<br>• Links Discovered: 10<br>• Snapshot: [chintap-home.png](./assets/examples/chintap-home.png) |
+| **What We Do**<br>`https://chintap.com/what-we-do` | <a href="./assets/examples/chintap-what-we-do.png"><img src="./assets/examples/chintap-what-we-do.png" width="400" alt="What We Do Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Purposeful software & physical products<br>• Snapshot: [chintap-what-we-do.png](./assets/examples/chintap-what-we-do.png) |
+| **How We Work**<br>`https://chintap.com/how-we-work` | <a href="./assets/examples/chintap-how-we-work.png"><img src="./assets/examples/chintap-how-we-work.png" width="400" alt="How We Work Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Prototyping & engineering pipelines<br>• Snapshot: [chintap-how-we-work.png](./assets/examples/chintap-how-we-work.png) |
+| **Dasyu Product Page**<br>`https://chintap.com/dasyu` | <a href="./assets/examples/chintap-dasyu.png"><img src="./assets/examples/chintap-dasyu.png" width="400" alt="Dasyu Product Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• CLI, REPL & Auth Bridge documentation<br>• Snapshot: [chintap-dasyu.png](./assets/examples/chintap-dasyu.png) |
+| **Explorations**<br>`https://chintap.com/explorations` | <a href="./assets/examples/chintap-explorations.png"><img src="./assets/examples/chintap-explorations.png" width="400" alt="Explorations Page Snapshot" /></a> | • Status: `200 OK` (Depth 1)<br>• Architectural blueprints & labs<br>• Snapshot: [chintap-explorations.png](./assets/examples/chintap-explorations.png) |
+
+---
+
 ## 🔐 Authenticated Crawling & Interactive Auth Bridge
 
 Dasyu provides an **Interactive Auth Bridge** and native Playwright **`storageState`** integration. You can easily log in to authenticated web applications, dashboards, admin panels, and SSO portals directly through an interactive browser window without scripting complex login flows!
