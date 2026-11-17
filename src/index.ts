@@ -20,6 +20,15 @@ export {
   type SeoAuditReport,
   type SeoPluginOptions,
 } from './plugins/seo';
+export {
+  AccessibilityPlugin,
+  createAccessibilityPlugin,
+  type AccessibilityAuditReport,
+  type AccessibilityViolation,
+  type AccessibilityPluginOptions,
+} from './plugins/accessibility';
+export { exportRagChunks, type RagChunk, type RagExportOptions } from './core/rag';
+export { exportSiteGraph, type SiteGraph, type SiteGraphNode, type SiteGraphEdge } from './core/graph';
 export { startMcpServer } from './mcp/server';
 export { captureScreenshot, sanitizeUrlToFilename, dismissCookieBanners } from './extractors/screenshot';
 export { extractPageContent, type ExtractedContentResult } from './extractors/content';

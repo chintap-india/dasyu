@@ -5,6 +5,9 @@ import { DasyuCrawler } from '../core/crawler';
 import { interactiveLogin, inspectStorageState, importBrowseSession } from '../core/auth';
 import { createBrowsePlugin } from '../plugins/browse';
 import { createSeoPlugin } from '../plugins/seo';
+import { createAccessibilityPlugin } from '../plugins/accessibility';
+import { exportRagChunks } from '../core/rag';
+import { exportSiteGraph } from '../core/graph';
 import { startMcpServer } from '../mcp/server';
 import { startRepl } from './repl';
 import { logger } from './logger';
@@ -134,6 +137,9 @@ export async function main(): Promise<void> {
     .option('--allow-external', 'Allow crawling external domains', false)
     .option('--detect-auth', 'Enable Anomalyco Browse plugin to monitor and alert on auth walls', false)
     .option('--seo', 'Enable SEO and metadata quality audit plugin', false)
+    .option('--a11y', 'Enable Axe-core WCAG 2.1 accessibility compliance audit plugin', false)
+    .option('--rag', 'Export extracted markdown to chunked JSONL for vector databases (Chroma, LanceDB)', false)
+    .option('--graph', 'Generate site link graph and Mermaid architecture diagram', false)
     .option('--delay <ms>', 'Delay in milliseconds between page navigations (rate limiting)')
     .option('--dismiss-modals', 'Automatically detect and dismiss cookie consent dialogs and modals', false)
     .action(async (url, opts) => {
@@ -141,6 +147,7 @@ export async function main(): Promise<void> {
       const concurrency = parseInt(opts.concurrency, 10) || 3;
       const storageState = opts.storageState || opts.auth;
       const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
+      const outDir = opts.output || './output';
 
       logger.header(`Dasyu v${pkg.version} — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
@@ -151,12 +158,15 @@ export async function main(): Promise<void> {
       if (opts.seo) {
         plugins.push(createSeoPlugin());
       }
+      if (opts.a11y) {
+        plugins.push(createAccessibilityPlugin());
+      }
 
       const crawler = new DasyuCrawler({
         startUrl: url,
         maxDepth: depth,
         concurrency,
-        outputDir: opts.output,
+        outputDir: outDir,
         extractContent: Boolean(opts.content),
         allowExternal: Boolean(opts.allowExternal),
         storageState,
@@ -177,7 +187,22 @@ export async function main(): Promise<void> {
 
         logger.success(`\nCrawl finished in ${(result.totalDurationMs / 1000).toFixed(2)}s!`);
         console.log(`  📊 Total Pages: ${pc.bold(result.pages.length.toString())}`);
-        console.log(`  📁 Output Dir:  ${pc.bold(logger.tomato(opts.output))}`);
+        console.log(`  📁 Output Dir:  ${pc.bold(logger.tomato(outDir))}`);
+
+        // Handle optional RAG chunk export
+        if (opts.rag && opts.content) {
+          const ragResult = await exportRagChunks(result.pages, {
+            outputPath: `${outDir}/rag-chunks.jsonl`,
+          });
+          logger.info(`  🧠 RAG Export:  ${pc.bold(ragResult.chunksCount.toString())} chunks saved to ${pc.cyan(ragResult.outputPath)}`);
+        }
+
+        // Handle optional Link Graph export
+        if (opts.graph) {
+          const graphResult = await exportSiteGraph(result.pages, outDir);
+          logger.info(`  🌐 Site Graph:  Saved ${pc.cyan(graphResult.graphJsonPath)} & ${pc.cyan(graphResult.mermaidPath)}`);
+        }
+
         if (result.errors.length > 0) {
           logger.warn(`  ⚠️  Errors encountered: ${result.errors.length}`);
         }
