@@ -611,7 +611,7 @@ export async function generateHtmlReport(
       </svg>
       <div>
         <div class="brand-title">dasyu <span class="red">दस्यु</span></div>
-        <div class="brand-subtitle"><span class="red">The Outlaw of the Web</span> • Automated Crawl &amp; Audit Report</div>
+        <div class="brand-subtitle"><span class="red">The Outlaw of the Web.</span> Roam links, capture snapshots, extract treasure. • Automated Crawl &amp; Audit Report</div>
       </div>
     </div>
 
@@ -688,7 +688,7 @@ export async function generateHtmlReport(
     <div class="footer-brand">
       chin<span class="red">tap</span>
     </div>
-    <div>THINGS. APPS. POSSIBILITIES. • <span class="red">The Outlaw of the Web</span> • <a href="https://chintap.com/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">chintap.com/dasyu</a> • <a href="https://github.com/chintap-india/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">GitHub</a></div>
+    <div>THINGS. APPS. POSSIBILITIES. • <span class="red">The Outlaw of the Web. Roam links, capture snapshots, extract treasure.</span> • <a href="https://chintap.com/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">chintap.com/dasyu</a> • <a href="https://github.com/chintap-india/dasyu" target="_blank" style="color: inherit; text-decoration: underline;">GitHub</a></div>
   </footer>
 
   <script>

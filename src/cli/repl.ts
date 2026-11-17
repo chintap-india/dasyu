@@ -420,7 +420,7 @@ function printBanner(opts: CrawlOptions): void {
   const v = pkg.version;
   console.log('');
   console.log(`  ${pc.bold(logger.tomato(`⚔  DASYU (दस्यु) v${v} — Interactive Web Snapshot REPL ⚔`))}`);
-  console.log(`  ${pc.bold(logger.tomato('The Outlaw of the Web.'))} ${logger.tomato('Roam links, capture snapshots, extract treasure.')}`);
+  console.log(`  ${pc.bold(logger.tomato('The Outlaw of the Web. Roam links, capture snapshots, extract treasure.'))}`);
   console.log(`  ${pc.dim('🌐 Web: ')}${pc.cyan('https://chintap.com/dasyu')}  ${pc.dim('• GitHub: ')}${pc.cyan('https://github.com/chintap-india/dasyu')}`);
   console.log(`  ${pc.dim('Type')} ${pc.cyan('help')} ${pc.dim('to see available commands or')} ${pc.cyan('exit')} ${pc.dim('to leave.')}\n`);
   printConfig(opts);

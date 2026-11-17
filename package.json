@@ -1,7 +1,7 @@
 {
   "name": "dasyu",
-  "version": "0.2.3",
-  "description": "Dasyu (दस्यु) — The Outlaw of the Web. Deep web snapshot, full-page screenshot, and markdown content extraction utility powered by Playwright.",
+  "version": "0.2.4",
+  "description": "Dasyu (दस्यु) — The Outlaw of the Web. Roam links, capture snapshots, extract treasure.",
   "homepage": "https://chintap.com/dasyu",
   "repository": {
     "type": "git",

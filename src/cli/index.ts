@@ -26,7 +26,7 @@ export async function main(): Promise<void> {
 
   program
     .name('dasyu')
-    .description('Dasyu (दस्यु) — The Outlaw of the Web. Deep web snapshot, screenshot, and markdown extraction utility.')
+    .description('Dasyu (दस्यु) — The Outlaw of the Web. Roam links, capture snapshots, extract treasure.')
     .version(pkg.version)
     .action(async () => {
       // Default action when no subcommand is provided: launch the interactive REPL!
@@ -165,7 +165,7 @@ export async function main(): Promise<void> {
       const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
       const outDir = opts.output || './output';
 
-      logger.header(`Dasyu (दस्यु) v${pkg.version} — The Outlaw of the Web — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
+      logger.header(`Dasyu (दस्यु) v${pkg.version} — The Outlaw of the Web. Roam links, capture snapshots, extract treasure. — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
       const plugins = [];
       if (opts.detectAuth) {
