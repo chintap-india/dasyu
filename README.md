@@ -242,13 +242,13 @@ Launch a real browser window, sign in, solve Multi-Factor Authentication (2FA/SS
 
 ```bash
 # Open interactive login window and save session to ./auth.json
-dasyu auth login https://today.chintap.com/login
+dasyu auth login https://today.chintap.com/tasks
 
 # Or specify a custom output path
-dasyu auth login https://today.chintap.com/login -o ./my-session.json
+dasyu auth login https://today.chintap.com/tasks -o ./my-session.json
 
 # Now crawl the authenticated dashboard with your saved state
-dasyu crawl https://today.chintap.com --auth ./auth.json --depth 2 --content
+dasyu crawl https://today.chintap.com/tasks --auth ./auth.json --depth 2 --content
 ```
 
 ### 2. Session Inspection & External Import (OpenCode Browse / Chrome)
@@ -266,17 +266,17 @@ dasyu auth import ./browse-cookies.json -o ./auth.json
 Enable the built-in **Anomalyco Browse Plugin** to monitor and alert on login walls, HTTP 401/403 status codes, and SSO redirects during autonomous crawls:
 
 ```bash
-dasyu crawl https://today.chintap.com --auth ./auth.json --detect-auth
+dasyu crawl https://today.chintap.com/tasks --auth ./auth.json --detect-auth
 ```
 
 In the interactive REPL, you can run all auth commands on the fly:
 ```bash
-dasyu> auth login https://today.chintap.com/login
+dasyu> auth login https://today.chintap.com/tasks
 ✔ Logged in and saved session to "./auth.json"!
 Session is now active for subsequent crawls in this REPL.
 
 dasyu> auth inspect ./auth.json
-dasyu> crawl https://today.chintap.com/dashboard --depth 2
+dasyu> crawl https://today.chintap.com/tasks --depth 2
 ```
 
 ---
