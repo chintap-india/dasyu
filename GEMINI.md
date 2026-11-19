@@ -59,3 +59,45 @@ this repo goes in `.trail/learnings/`: commit it with the change, so your
 teammates' agent starts from it. Run `trail check` before you commit or open
 a PR: it flags a change that goes against a learning.
 <!-- trail:end -->
+
+---
+
+## Release & Publishing Protocol (Strict Rules for Every Next Release)
+
+Whenever the user or a task asks to release, version bump, or publish `@chintap/dasyu`:
+
+### 1. Absolute Public Image URLs (Zero Broken Images on NPM)
+- **Never** use relative image paths (e.g. `./assets/...`) in `README.md`. NPM and external markdown renderers fail to resolve relative paths from package tarballs.
+- **Brand Banners & Logos**: Must use public CDN URLs:
+  - Dark: `https://chintap.com/images/dasyu-brand-horizontal-dark-2400.png`
+  - Light: `https://chintap.com/images/dasyu-brand-horizontal-2400.png`
+  - Dashboard: `https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/dasyu-ui-dashboard.png`
+- **Showcase & Example Snapshots**: Must use public GitHub raw URLs:
+  - `https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/<filename>.png`
+- Always verify all image URLs return `HTTP 200` before releasing.
+
+### 2. Pre-Flight Verification & Metadata Sync
+- Ensure all 16 test files pass cleanly (`npm test`).
+- Compile TypeScript bundles (`npm run build`).
+- Verify `package.json` `"version"` matches the semantic release target.
+- Verify `package.json` `"files"` array includes `["dist", "bin", "README.md", "llms.txt"]`.
+- Ensure `llms.txt` is updated with latest CLI flags, MCP tools, and library exports.
+- Never commit `auth.json` or session files (verify `.gitignore`).
+
+### 3. Git Tagging & Release Notes Protocol
+- Push all commits to `origin main` first.
+- Tag the release using semantic versioning:
+  ```bash
+  git tag -a v<version> -m "Release v<version>: <summary>"
+  git push origin v<version>
+  ```
+- **GitHub Release Formatting Standards**:
+  - Always include the centered brand logo: `<p align="center"><img src="https://chintap.com/images/dasyu-brand-horizontal-dark-2400.png" alt="Dasyu (दस्यु)" width="640" /></p>`.
+  - Always use clear H3 subsections (`### 📦 Quick Start & Installation`, `### ✨ Release Highlights`, `### 🔗 Official Links`).
+  - Always use proper fenced code blocks (```bash ... ```). Never output bare lines without code fences.
+  - If the git tag was already pushed, edit the existing tag notes at `https://github.com/chintap-india/dasyu/releases/edit/v<version>` rather than trying to create a duplicate tag.
+
+### 4. NPM Publishing
+- Scope: `@chintap/dasyu` with public access (`npm publish`).
+- Verify via `npm whoami` and ensure 2FA is active.
+- Verify published tarball contents: `npx @chintap/dasyu@<version> --version`.
