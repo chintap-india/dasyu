@@ -252,6 +252,8 @@ A deep crawl of the [Today](https://today.chintap.com) task management web appli
 | **Today Landing & Overview**<br>`https://today.chintap.com/` | <a href="https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-home.png"><img src="https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-home.png" width="380" alt="Today Homepage Snapshot" /></a> | • Status: `200 OK`<br>• Design philosophy: *Work. Without the overhead.*<br>• Snapshot: [today-home.png](https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-home.png)<br>• Content: [index.md](./demo-output/today/today.chintap.com/content/2026-11-17_17-49-42__index.md) |
 | **Interactive Sandbox Demo**<br>`https://today.chintap.com/demo` | <a href="https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-demo.png"><img src="https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-demo.png" width="380" alt="Today Demo Page Snapshot" /></a> | • Status: `200 OK`<br>• Interactive feature tour & sample workflows<br>• Snapshot: [today-demo.png](https://raw.githubusercontent.com/chintap-india/dasyu/main/assets/examples/today-demo.png)<br>• Content: [demo.md](./demo-output/today/today.chintap.com/content/2026-11-17_17-49-48__demo.md) |
 
+> 💡 **Agentic Tip**: You can crawl Today's task management workspace with zero auth configuration by targeting `https://today.chintap.com/demo` (`dasyu crawl https://today.chintap.com/demo -m --content`). Today automatically provisions a local Lead Developer session for automated browser agents and scrapers.
+
 ---
 
 ## 🔐 Authenticated Crawling & Interactive Auth Bridge
