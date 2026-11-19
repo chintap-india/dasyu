@@ -189,6 +189,10 @@ To automatically open the report immediately after a crawl completes:
 ```bash
 dasyu crawl https://chintap.com --open
 
+# Or view any previously generated report folder in your default browser:
+dasyu view ./output
+```
+
 # Automatically bundle into a ZIP archive:
 dasyu crawl https://chintap.com --zip
 
@@ -295,6 +299,14 @@ Session is now active for subsequent crawls in this REPL.
 dasyu> auth inspect ./auth.json
 dasyu> crawl https://today.chintap.com/tasks --depth 2
 ```
+
+### 💡 Pro-Tips & Common Confusions Solved
+
+- **SPA Auth Entrypoints**: Modern SPAs (Angular, React, Vue, Netlify Identity) often do not have a dedicated server route for `/login`. Navigating directly to `/login` might show a 404 or "Page Not Found" layout behind the login modal. **Solution:** Point `dasyu auth login` directly to your target **protected workspace URL** (e.g. `https://today.chintap.com/tasks` or `https://app.example.com/dashboard`). The app's client-side auth guard will automatically open the login modal on top of that page.
+- **Login Methods Supported**: The Interactive Auth Bridge is completely method-agnostic. You can sign in using **Email & Password**, social SSO (**Google, GitHub, GitLab, Bitbucket**), or complete hardware/SMS/TOTP Multi-Factor Authentication.
+- **Dual State Capture (`localStorage` + `cookies`)**: Modern client-side applications store session tokens (such as `gotrue.user` or Supabase JWTs) inside `localStorage`. Dasyu captures both cookies AND origin-scoped `localStorage` so client-side hydration passes seamlessly.
+- **Verify Before Crawling**: Run `dasyu auth inspect ./auth.json` to confirm that cookies and origin keys were captured properly before launching a large crawl.
+- **Viewing Reports**: Run `dasyu view ./output` to automatically launch the generated `report.html` dashboard in your default browser (unlike OS-level `open ./output` which merely reveals the folder in Finder).
 
 ---
 

@@ -59,6 +59,13 @@
 - `dasyu mcp`: Launch native Model Context Protocol server over stdio.
 - `dasyu repl` (or bare `dasyu`): Enter interactive terminal shell.
 
+## Authentication Pro-Tips for AI Agents & Developers
+- Single Page Applications (SPAs): Point `auth login` to the protected workspace route (e.g., `/tasks` or `/dashboard`) rather than `/login` to avoid 404s behind the login modal.
+- Method Agnostic: Supports Email/Password, Google, GitHub, and 2FA/MFA.
+- Dual-State Storage: Captures both cookies and origin-scoped `localStorage` (such as `gotrue.user`).
+- Inspect Before Crawl: Use `dasyu auth inspect <path>` to verify token persistence.
+- Viewing Dashboard: Use `dasyu view ./output` to launch the interactive HTML report directly.
+
 ## MCP Configuration
 For Antigravity, Claude Desktop, Cursor, Gemini:
 ```json
