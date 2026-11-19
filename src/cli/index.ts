@@ -12,6 +12,7 @@ import { exportRagChunks } from '../core/rag';
 import { exportSiteGraph } from '../core/graph';
 import { generateHtmlReport, openTarget } from '../core/report';
 import { exportDashboardZip } from '../core/zip';
+import { loadConfigFile } from '../plugins/loader';
 import { startMcpServer } from '../mcp/server';
 import { startRepl } from './repl';
 import { logger } from './logger';
@@ -158,18 +159,28 @@ export async function main(): Promise<void> {
     .option('--graph', 'Generate site link graph and Mermaid architecture diagram', false)
     .option('--delay <ms>', 'Delay in milliseconds between page navigations (rate limiting)')
     .option('--dismiss-modals', 'Automatically detect and dismiss cookie consent dialogs and modals', false)
+    .option('-m, --explore-modals', 'Detect UI frameworks and explore interactive modals/dialogs', false)
+    .option('--max-modals <number>', 'Maximum modals to explore per page (default: 5)', '5')
+    .option('-p, --plugin <paths...>', 'Load custom user plugin(s) from local JS/MJS files')
+    .option('--config <path>', 'Path to custom dasyu.config.js configuration file')
     .option('--zip', 'Export full HTML report and domain assets to a portable ZIP archive', false)
     .option('-O, --open', 'Automatically open visual HTML report in your default browser upon completion', false)
     .action(async (url, opts) => {
-      const depth = parseInt(opts.depth, 10) || 1;
-      const concurrency = parseInt(opts.concurrency, 10) || 3;
-      const storageState = opts.storageState || opts.auth;
-      const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
-      const outDir = opts.output || './output';
+      const configFile = await loadConfigFile(opts.config);
+      const depth = parseInt(opts.depth, 10) || configFile?.maxDepth || 1;
+      const concurrency = parseInt(opts.concurrency, 10) || configFile?.concurrency || 3;
+      const storageState = opts.storageState || opts.auth || configFile?.storageState;
+      const delay = opts.delay ? parseInt(opts.delay, 10) : configFile?.delay;
+      const outDir = opts.output || configFile?.outputDir || './output';
+
+      const pluginPaths: string[] = [
+        ...(configFile?.pluginPaths || []),
+        ...(Array.isArray(opts.plugin) ? opts.plugin : opts.plugin ? [opts.plugin] : []),
+      ];
 
       logger.header(`Dasyu (दस्यु) v${pkg.version} — The Outlaw of the Web. Roam links, capture snapshots, extract treasure. — Unleashing on ${pc.cyan(url)} (Depth: ${depth}${storageState ? `, Auth: ${storageState}` : ''})`);
 
-      const plugins = [];
+      const plugins = [...(configFile?.plugins || [])];
       if (opts.detectAuth) {
         plugins.push(createBrowsePlugin({ sessionState: storageState }));
       }
@@ -185,11 +196,14 @@ export async function main(): Promise<void> {
         maxDepth: depth,
         concurrency,
         outputDir: outDir,
-        extractContent: Boolean(opts.content),
-        allowExternal: Boolean(opts.allowExternal),
+        extractContent: Boolean(opts.content || configFile?.extractContent),
+        allowExternal: Boolean(opts.allowExternal || configFile?.allowExternal),
         storageState,
         delay,
-        dismissModals: Boolean(opts.dismissModals),
+        dismissModals: Boolean(opts.dismissModals || configFile?.dismissModals),
+        exploreModals: Boolean(opts.exploreModals || configFile?.exploreModals),
+        maxModalsPerPage: parseInt(opts.maxModals, 10) || configFile?.maxModalsPerPage || 5,
+        pluginPaths,
         plugins,
       });
 

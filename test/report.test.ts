@@ -58,6 +58,7 @@ describe('HTML Visual Report Generator', () => {
 
     // Check header and branding
     expect(htmlContent).toContain('The Outlaw of the Web');
+    expect(htmlContent).toContain('dasyu<span class="devanagari">दस्यु</span>');
     expect(htmlContent).toContain('Dasyu Crawl Report');
     expect(htmlContent).toContain('chintap.com');
     expect(htmlContent).toContain('Automated Crawl &amp; Audit Report');

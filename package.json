@@ -1,7 +1,10 @@
 {
-  "name": "dasyu",
-  "version": "0.2.9",
+  "name": "@chintap/dasyu",
+  "version": "0.3.0",
   "description": "Dasyu (दस्यु) — The Outlaw of the Web. Roam links, capture snapshots, extract treasure.",
+  "publishConfig": {
+    "access": "public"
+  },
   "homepage": "https://chintap.com/dasyu",
   "repository": {
     "type": "git",

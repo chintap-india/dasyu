@@ -18,10 +18,12 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 
 - **Depth-Controlled BFS Crawler**: Crawl any web application with configurable depth ($1 \le N \le 5$). Includes URL normalization, deduplication, and same-origin filtering.
 - **Full-Page DOM Screenshots**: Automatically captures visual layouts and full-page rendering using Playwright headless automation.
+- **UI Framework & Technology Detection**: Rule-based detection for Angular, React, Next.js, Vue, Nuxt, Svelte, Angular Material/CDK, Radix UI, Bootstrap, Headless UI, and native HTML5 dialogs with version badges in reports.
+- **Interactive Modal & Drawer Explorer**: Automatically discovers interactive triggers, explores modals, dialogs, drawers, and status pickers, captures settled visual snapshots, and extracts deep-link permalinks (`/tasks/:id`).
 - **Markdown Content Extraction**: Converts raw HTML DOM structures into clean, readable Markdown and structured JSON metadata (title, description, headings, link graph).
 - **Interactive Visual HTML Dashboard**: Generates a standalone, dark-themed responsive `report.html` dashboard with visual cards, search filtering, and zoom lightboxes.
 - **Zero Orphaned Process Guarantee**: Centralized `BrowserManager` registry and automated process termination signal hooks (`SIGINT`, `SIGTERM`, `SIGHUP`, `beforeExit`) with timeout safeguards ensure Chromium instances are never left running or orphaned in the background.
-- **Extensible Plugin Architecture**: Built on an asynchronous lifecycle hook system (`onPageLoad`, `onScreenshot`, `onExtract`, `onAnalyze`) ready for future plugins like accessibility auditing (WCAG via `@axe-core/playwright`), SEO audits, and performance profiling.
+- **Extensible Plugin Architecture & Config Loader**: Authors can load custom ESM/CJS plugins via `-p, --plugin` or `dasyu.config.{js,mjs,cjs,json}` files with custom lifecycle hooks (`onPageLoad`, `onScreenshot`, `onExtract`, `onAnalyze`).
 - **Dual CLI & Library**: Use directly from your terminal or import programmatically into your Node.js/TypeScript applications.
 
 ---
@@ -76,6 +78,15 @@ dasyu crawl https://chintap.com --output ./results
 # Crawl 3 levels deep, generating full-page screenshots AND clean Markdown content reports
 dasyu crawl https://chintap.com --depth 3 --content --output ./results
 
+# Crawl with UI framework detection & interactive modal exploration
+dasyu crawl https://today.chintap.com/demo --explore-modals --depth 1 --content
+
+# Limit modal exploration to 3 modals per page
+dasyu crawl https://today.chintap.com/demo -m --max-modals 3
+
+# Load custom user plugins or configuration file
+dasyu crawl https://chintap.com --config ./dasyu.config.js --plugin ./plugins/custom.mjs
+
 # Crawl an authenticated web app or dashboard using saved Playwright storageState cookies & localStorage
 dasyu crawl https://today.chintap.com --auth ./auth.json --depth 2 --content
 
@@ -124,6 +135,10 @@ dasyu clean ./my-snapshots
 | `--graph` | Generate site link graph JSON and Mermaid flowchart diagram | `false` |
 | `--delay <ms>` | Throttling delay between page requests in milliseconds | `undefined` |
 | `--dismiss-modals` | Detect & auto-dismiss cookie banners & dialogs | `false` |
+| `-m, --explore-modals` | Detect UI frameworks and explore interactive modals/dialogs | `false` |
+| `--max-modals <number>` | Maximum modals to explore per page (default: 5) | `5` |
+| `-p, --plugin <paths...>` | Load custom user plugin(s) from local JS/MJS files | `undefined` |
+| `--config <path>` | Path to custom `dasyu.config.js` configuration file | `undefined` |
 | `--debug` | Enable verbose debug logging | `false` |
 
 ---
@@ -266,6 +281,68 @@ dasyu> crawl https://today.chintap.com/dashboard --depth 2
 
 ---
 
+## ⚡ UI Framework Detection & Interactive Modal Explorer
+
+Modern web applications often hide critical workflows, task specifications, and state changes behind interactive dialogs, drawers, and modal overlays. Dasyu includes automated frontend framework detection and an interactive modal exploration engine.
+
+### 1. UI Framework & Component Detection
+Dasyu inspects window globals, DOM attributes, and script tags to identify the application's underlying architecture:
+* **Frameworks**: Angular, React, Next.js, Vue, Nuxt, Svelte.
+* **Component Libraries**: Angular Material / CDK (`.mat-mdc-dialog-container`), Radix UI / Shadcn (`[data-radix-portal]`), Bootstrap (`.modal`), Headless UI, and native HTML5 `<dialog>`.
+* **SPA Routing**: Angular Router, Next.js App/Pages Router, React Router, Vue Router.
+
+Detected frameworks and versions are rendered as interactive badges directly in the visual report.
+
+### 2. Exploring Modals in CLI & REPL
+Pass `-m` or `--explore-modals` to unleash modal exploration:
+
+```bash
+# Explore interactive modals up to depth 1
+dasyu crawl https://today.chintap.com/demo --explore-modals --depth 1 --content
+
+# Limit exploration to top 3 modals per page
+dasyu crawl https://today.chintap.com/demo -m --max-modals 3
+```
+
+During exploration, Dasyu:
+1. **Discovers Candidate Triggers**: Inspects buttons, cards, action menus, and badges matching modal keywords (`details`, `specs`, `status`, `edit`, `tour`, `mattooltip`, `aria-haspopup`).
+2. **Filters Destructive Actions**: Protects state by ignoring dangerous actions (`delete`, `remove`, `destroy`, `logout`).
+3. **Inspects and Captures Overlays**: Clicks triggers, settles entrance transitions (e.g. CDK fade-in animations), captures visual snapshots, and extracts form fields, status options, and permalink routes (e.g. `/tasks/:id`).
+4. **Cleanly Dismisses Dialogs**: Closes overlays via `Escape` and backdrop clicks, restoring the clean baseline before testing the next trigger.
+
+---
+
+## 🔌 Custom Plugins & Configuration File
+
+You can author custom plugins or customize crawl settings using `dasyu.config.js`:
+
+```javascript
+// dasyu.config.js
+import { definePlugin } from 'dasyu';
+
+export default {
+  maxDepth: 2,
+  concurrency: 4,
+  exploreModals: true,
+  maxModalsPerPage: 5,
+  plugins: [
+    definePlugin({
+      name: 'custom-logger',
+      onPageLoad: async (ctx) => {
+        console.log(`Visited: ${ctx.url}`);
+      },
+    }),
+  ],
+};
+```
+
+Run with your config:
+```bash
+dasyu crawl https://example.com --config ./dasyu.config.js
+```
+
+---
+
 ## 🐚 Interactive REPL Shell
 
 Running `dasyu` with no arguments launches an interactive, tomato-styled REPL shell where you can live-command the crawler and inspect results:
@@ -276,13 +353,15 @@ dasyu
 ```
 
 Inside the `dasyu> ` prompt:
-- `crawl <url> [depth]` — Crawls a website, taking snapshots and extracting Markdown. Supports flags like `--auth <path>`.
+- `crawl <url> [depth] [flags]` — Crawls a website, taking snapshots and extracting Markdown. Supports flags like `-m` (`--explore-modals`), `--max-modals <N>`, `--auth <path>`, and `--content`.
 - `goto <url>` (or `snap <url>`) — Captures a one-off snapshot of a single page.
 - `pages` (or `ls`, `list`) — Lists all pages captured in the current session.
 - `inspect <index|url>` — Shows detailed JSON metadata, links, and file paths for a captured page.
 - `auth <load|save|clear>` — Dynamically manage Playwright authentication storageState (cookies & localStorage).
-- `config [key] [val]` — Views or live-updates crawler settings (concurrency, depth, outputDir, auth).
+- `plugins` (or `plugin load <path>`) — View or dynamically load custom user plugins.
+- `config [key] [val]` — Views or live-updates crawler settings (`depth`, `concurrency`, `output`, `content`, `auth`, `modals`, `max-modals`).
 - `clean [dir]` (or `reset [dir]`) — Clears generated output directories and resets the session captured pages list.
+- `view [dir]` (or `open`) — Opens the generated visual HTML report in your default browser.
 - `clear` — Clears screen and prints the version banner.
 - `exit` — Closes browser session and exits REPL.
 

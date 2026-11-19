@@ -129,6 +129,34 @@ export async function generateHtmlReport(
         `;
       }
 
+      let fwBadge = '';
+      if (page.metadata?.uiFramework?.framework && page.metadata.uiFramework.framework !== 'Static / Vanilla') {
+        const fw = page.metadata.uiFramework;
+        const fwTitle = `${fw.framework}${fw.version ? ' v' + fw.version : ''} (${fw.componentLibraries?.join(', ') || 'SPA'})`;
+        fwBadge = `<span class="badge fw-badge" title="${escapeHtml(fwTitle)}">⚡ ${escapeHtml(fw.framework)}</span>`;
+      }
+
+      let modalsHtml = '';
+      if (Array.isArray(page.metadata?.modals) && page.metadata.modals.length > 0) {
+        const modals = page.metadata.modals;
+        modalsHtml = `
+          <div class="modal-box">
+            <div class="modal-box-header">
+              <span>🗂️ Interactive Modals (${modals.length})</span>
+            </div>
+            ${modals.map((m: any) => {
+              const relModalShot = m.screenshotPath ? path.relative(outputDir, m.screenshotPath) : '';
+              return `
+                <div class="modal-pill">
+                  <span><strong>${escapeHtml(m.modalTitle)}</strong> (${escapeHtml(m.modalType)})</span>
+                  ${relModalShot ? `<a href="${relModalShot}" target="_blank" onclick="event.stopPropagation(); openLightbox('${relModalShot}', '${escapeHtml(m.modalTitle)}')">View ↗</a>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
       const escapedTitle = escapeHtml(page.title || 'Untitled Page');
       const escapedUrl = escapeHtml(page.url);
       const escapedSnippet = escapeHtml(markdownSnippet);
@@ -139,6 +167,7 @@ export async function generateHtmlReport(
             <div class="card-badges">
               ${statusBadge}
               ${depthBadge}
+              ${fwBadge}
             </div>
             <a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="page-url" title="${escapedUrl}">
               ${escapedUrl} ↗
@@ -165,6 +194,8 @@ export async function generateHtmlReport(
                 : `<div class="no-screenshot">No screenshot captured</div>`
             }
           </div>
+
+          ${modalsHtml}
 
           <div class="card-footer">
             ${
@@ -249,18 +280,27 @@ export async function generateHtmlReport(
       font-weight: 900;
       color: #FFFFFF;
       line-height: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: inline-flex;
+      align-items: flex-start;
+      letter-spacing: -0.5px;
+    }
+    .brand-title .devanagari {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent-red);
+      line-height: 1;
+      margin-left: 3px;
+      margin-top: -2px;
+      letter-spacing: 0.5px;
     }
     .brand-title .red { color: var(--accent-red); }
     .brand-subtitle {
       font-family: 'Space Grotesk', monospace;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--text-muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
+      letter-spacing: normal;
       margin-top: 4px;
     }
 
@@ -387,6 +427,44 @@ export async function generateHtmlReport(
     .status-200 { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
     .status-warn { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
     .depth-badge { background: #222938; color: var(--text-muted); border: 1px solid var(--card-border); }
+    .fw-badge { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    .modal-box {
+      background: #11141D;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .modal-box-header {
+      font-weight: 700;
+      color: #F87171;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .modal-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: #171B25;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: #D1D5DB;
+      font-size: 12px;
+    }
+    .modal-pill a {
+      color: #60A5FA;
+      text-decoration: underline;
+      font-size: 11px;
+    }
 
     .page-url {
       font-family: 'Space Grotesk', monospace;
@@ -611,7 +689,7 @@ export async function generateHtmlReport(
         <polygon points="80,520 960,280 960,720 760,920 80,920" fill="#FFFFFF" />
       </svg>
       <div>
-        <div class="brand-title">dasyu <span class="red">दस्यु</span></div>
+        <div class="brand-title">dasyu<span class="devanagari">दस्यु</span></div>
         <div class="brand-subtitle"><span class="red">The Outlaw of the Web.</span> Roam links, capture snapshots, extract treasure. • Automated Crawl &amp; Audit Report</div>
       </div>
     </div>

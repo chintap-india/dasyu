@@ -10,6 +10,7 @@ import type { CrawlOptions, PageData } from '../core/types';
 import { logger } from './logger';
 import { captureScreenshot } from '../extractors/screenshot';
 import { extractPageContent } from '../extractors/content';
+import { loadPlugin } from '../plugins/loader';
 import pkg from '../../package.json';
 
 /**
@@ -24,6 +25,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
     outputDir: initialOptions.outputDir ?? './output',
     extractContent: initialOptions.extractContent ?? true,
     allowExternal: initialOptions.allowExternal ?? false,
+    exploreModals: initialOptions.exploreModals ?? false,
+    maxModalsPerPage: initialOptions.maxModalsPerPage ?? 5,
     storageState: initialOptions.storageState,
   };
 
@@ -67,6 +70,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           let extVal = options.allowExternal;
           let debugVal = options.debug;
           let storageVal = options.storageState;
+          let exploreModalsVal = options.exploreModals;
+          let maxModalsVal = options.maxModalsPerPage;
 
           for (let i = 0; i < args.length; i++) {
             const arg = args[i];
@@ -86,6 +91,11 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
               contentVal = false;
             } else if (arg === '--allow-external') {
               extVal = true;
+            } else if (arg === '-m' || arg === '--explore-modals' || arg === '--modals') {
+              exploreModalsVal = true;
+            } else if (arg === '--max-modals') {
+              const next = parseInt(args[++i], 10);
+              if (!isNaN(next)) maxModalsVal = next;
             } else if (arg === '--debug') {
               debugVal = true;
             } else if (!arg.startsWith('-') && !url) {
@@ -114,6 +124,8 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
             allowExternal: extVal,
             debug: debugVal,
             storageState: storageVal,
+            exploreModals: exploreModalsVal,
+            maxModalsPerPage: maxModalsVal,
           };
 
           logger.info(`Unleashing Dasyu on ${pc.cyan(url)} (depth: ${crawlOpts.maxDepth}, concurrency: ${crawlOpts.concurrency}${storageVal ? `, auth: ${storageVal}` : ''})...`);
@@ -239,8 +251,14 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
               options.storageState = val === 'none' || val === 'null' ? undefined : val;
               await browserManager.setStorageState(options.storageState);
               logger.success(`storageState (auth) set to ${options.storageState || 'none'}`);
+            } else if (key === 'modals' || key === 'explore-modals' || key === 'exploremodals') {
+              options.exploreModals = val === 'true' || val === '1';
+              logger.success(`exploreModals set to ${options.exploreModals}`);
+            } else if (key === 'max-modals' || key === 'maxmodals') {
+              options.maxModalsPerPage = parseInt(val, 10) || 5;
+              logger.success(`maxModalsPerPage set to ${options.maxModalsPerPage}`);
             } else {
-              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content, allow-external, auth`);
+              logger.error(`Unknown config key "${key}". Valid keys: depth, concurrency, output, content, allow-external, auth, modals, max-modals`);
             }
           }
           break;
@@ -322,6 +340,42 @@ export async function startRepl(initialOptions: Partial<CrawlOptions> = {}): Pro
           break;
         }
 
+        case 'plugin':
+        case 'plugins': {
+          const sub = args[0]?.toLowerCase();
+          const targetPath = args[1];
+
+          if (sub === 'load' || sub === 'add') {
+            if (!targetPath) {
+              logger.error('Please specify a plugin path: plugin load <./my-plugin.js>');
+            } else {
+              try {
+                const loaded = await loadPlugin(targetPath);
+                options.plugins = options.plugins || [];
+                options.plugins.push(loaded);
+                logger.success(`✔ Loaded custom plugin: "${pc.bold(loaded.name)}" from ${pc.cyan(targetPath)}`);
+              } catch (err: any) {
+                logger.error(`Failed to load plugin: ${err.message}`);
+              }
+            }
+          } else if (sub === 'clear') {
+            options.plugins = [];
+            logger.success('Cleared all custom plugins from active session.');
+          } else {
+            const activePlugins = options.plugins || [];
+            logger.header(`Active Plugins (${activePlugins.length})`);
+            if (activePlugins.length === 0) {
+              console.log(pc.dim('  No custom user plugins loaded. Run "plugin load <path>" to load one.'));
+            } else {
+              activePlugins.forEach((p, idx) => {
+                console.log(`  [${idx + 1}] ${pc.bold(pc.green(p.name))}`);
+              });
+            }
+            console.log(pc.dim('\n  Commands: plugin load <path>, plugin clear, plugins'));
+          }
+          break;
+        }
+
         case 'clean':
         case 'reset': {
           const targets = args.length > 0 ? args : [options.outputDir || './output', './results'];
@@ -390,7 +444,7 @@ function printHelp(): void {
   logger.header('Dasyu (दस्यु) — The Outlaw of the Web — REPL Commands');
   console.log(`  ${pc.cyan('help')}                   Display interactive REPL welcome banner and active session configuration`);
   console.log(`  ${pc.cyan('crawl <url> [args]')}     Crawl website up to depth N (BFS)`);
-  console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, -s/--auth <path>, --content, --allow-external')}`);
+  console.log(`    ${pc.dim('Flags: -d/--depth <N>, -c/--concurrency <N>, -o/--output <dir>, -s/--auth <path>, -m/--explore-modals, --max-modals <N>, --content, --allow-external')}`);
   console.log(`  ${pc.cyan('goto <url>')}             Navigate to a single page, snap full screenshot and extract content`);
   console.log(`  ${pc.cyan('snap <url>')}             Alias for goto: capture instant snapshot of URL`);
   console.log(`  ${pc.cyan('pages')}                  List all pages captured in this session (alias: ls)`);
@@ -402,7 +456,9 @@ function printHelp(): void {
   console.log(`    ${pc.dim('auth load <file>         — Load existing storageState JSON file')}`);
   console.log(`    ${pc.dim('auth save [file]         — Save current session cookies to file')}`);
   console.log(`    ${pc.dim('auth clear               — Clear active authentication session')}`);
-  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth)`);
+  console.log(`  ${pc.cyan('plugins')}                List active custom plugins in this session`);
+  console.log(`  ${pc.cyan('plugin load <path>')}     Load custom user plugin (.js, .mjs) into session`);
+  console.log(`  ${pc.cyan('config [key] [val]')}     View or change settings (depth, concurrency, output, content, auth, modals, max-modals)`);
   console.log(`  ${pc.cyan('clean [dir]')}            Clean/reset output directory & clear session pages (${pc.dim('alias: reset')})`);
   console.log(`  ${pc.cyan('view [dir]')}             Open visual HTML report or screenshots in browser (${pc.dim('alias: open')})`);
   console.log(`  ${pc.cyan('clear')}                  Clear terminal screen`);
@@ -416,6 +472,7 @@ function printConfig(opts: CrawlOptions): void {
   console.log(`  ${pc.bold('output')}:         ${opts.outputDir}`);
   console.log(`  ${pc.bold('content')}:        ${opts.extractContent ? pc.green('enabled') : pc.yellow('disabled')}`);
   console.log(`  ${pc.bold('allow-external')}: ${opts.allowExternal ? pc.green('enabled') : pc.yellow('disabled')}`);
+  console.log(`  ${pc.bold('modals (explore)')}: ${opts.exploreModals ? pc.green('enabled') : pc.dim('disabled')}`);
   console.log(`  ${pc.bold('auth (storage)')}: ${opts.storageState ? pc.cyan(String(opts.storageState)) : pc.dim('none')}\n`);
 }
 

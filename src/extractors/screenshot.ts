@@ -189,6 +189,19 @@ export async function captureScreenshot(
       const maxScrollH = Math.max(...Array.from(document.querySelectorAll('*')).map(e => e.scrollHeight));
       if (maxScrollH > (document.documentElement?.clientHeight || 0) + 50) {
         document.querySelectorAll('*').forEach(el => {
+          // Never expand visually hidden, screen-reader, or CDK message containers
+          if (
+            el.classList.contains('cdk-visually-hidden') ||
+            el.classList.contains('cdk-describedby-message-container') ||
+            el.classList.contains('cdk-live-announcer-element') ||
+            el.classList.contains('sr-only') ||
+            el.classList.contains('visually-hidden') ||
+            el.getAttribute('aria-hidden') === 'true' ||
+            el.closest('.cdk-visually-hidden') ||
+            el.closest('.cdk-describedby-message-container')
+          ) {
+            return;
+          }
           if (el.scrollHeight > el.clientHeight + 20 || el.scrollHeight >= maxScrollH - 50) {
             const htmlEl = el as HTMLElement;
             if (htmlEl.style) {

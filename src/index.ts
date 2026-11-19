@@ -27,6 +27,20 @@ export {
   type AccessibilityViolation,
   type AccessibilityPluginOptions,
 } from './plugins/accessibility';
+export {
+  ModalExplorerPlugin,
+  createModalPlugin,
+  detectUiFramework,
+  discoverModalTriggers,
+  closeModal,
+  DEFAULT_TECH_RULES,
+  type ModalExplorerOptions,
+} from './plugins/modal';
+export {
+  loadPlugin,
+  loadPlugins,
+  loadConfigFile,
+} from './plugins/loader';
 export { exportRagChunks, type RagChunk, type RagExportOptions } from './core/rag';
 export { exportSiteGraph, type SiteGraph, type SiteGraphNode, type SiteGraphEdge } from './core/graph';
 export { generateHtmlReport, openTarget, type ReportOptions } from './core/report';

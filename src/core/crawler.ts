@@ -4,6 +4,8 @@ import type { DasyuPlugin } from '../plugins/base';
 import { BrowserManager } from './browser';
 import { captureScreenshot, dismissCookieBanners } from '../extractors/screenshot';
 import { extractPageContent } from '../extractors/content';
+import { ModalExplorerPlugin } from '../plugins/modal';
+import { loadPlugins } from '../plugins/loader';
 
 /**
  * Main engine for Dasyu web crawling, snapshotting, and content extraction.
@@ -22,7 +24,13 @@ export class DasyuCrawler {
       concurrency: options.concurrency || 3,
       outputDir: options.outputDir || './output',
     };
-    this.plugins = options.plugins || [];
+    this.plugins = [...(options.plugins || [])];
+    if (this.options.exploreModals) {
+      const hasModal = this.plugins.some((p) => p.name === 'modal-explorer');
+      if (!hasModal) {
+        this.plugins.push(new ModalExplorerPlugin({ maxModalsPerPage: this.options.maxModalsPerPage }));
+      }
+    }
     if (browserManager) {
       this.browserManager = browserManager;
       this.persistentBrowser = true;
@@ -103,6 +111,12 @@ export class DasyuCrawler {
     const errors: { url: string; depth: number; error: string }[] = [];
 
     try {
+      // Load external user plugins if specified
+      if (this.options.pluginPaths && this.options.pluginPaths.length > 0) {
+        const externalPlugins = await loadPlugins(this.options.pluginPaths);
+        this.plugins.push(...externalPlugins);
+      }
+
       // Notify plugins onStart
       for (const plugin of this.plugins) {
         await plugin.onStart?.();
@@ -262,12 +276,19 @@ export class DasyuCrawler {
         const normalizedLinks = new Set<string>();
         const linkDetails: LinkMetadata[] = [];
 
-        for (const raw of (rawAnchorElements || [])) {
-          const href = typeof raw === 'string' ? raw : raw?.href;
-          const rawHref = typeof raw === 'string' ? raw : raw?.rawHref || raw?.href || '';
-          const text = typeof raw === 'string' ? '' : raw?.text || '';
-          const target = typeof raw === 'string' ? undefined : raw?.target;
-          const rel = typeof raw === 'string' ? undefined : raw?.rel;
+        // Pre-populate with links discovered by plugins (e.g. ModalExplorerPlugin)
+        const initialLinks = [
+          ...(pageData.links || []).map((l) => ({ href: l, rawHref: l, text: '' })),
+          ...(rawAnchorElements || []),
+        ];
+
+        for (const raw of initialLinks) {
+          const item = raw as any;
+          const href = typeof item === 'string' ? item : item?.href;
+          const rawHref = typeof item === 'string' ? item : item?.rawHref || item?.href || '';
+          const text = typeof item === 'string' ? '' : item?.text || '';
+          const target = typeof item === 'string' ? undefined : item?.target;
+          const rel = typeof item === 'string' ? undefined : item?.rel;
 
           if (!href) continue;
 

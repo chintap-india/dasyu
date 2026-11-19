@@ -64,18 +64,27 @@
       font-weight: 900;
       color: #FFFFFF;
       line-height: 1;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: inline-flex;
+      align-items: flex-start;
+      letter-spacing: -0.5px;
+    }
+    .brand-title .devanagari {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent-red);
+      line-height: 1;
+      margin-left: 3px;
+      margin-top: -2px;
+      letter-spacing: 0.5px;
     }
     .brand-title .red { color: var(--accent-red); }
     .brand-subtitle {
       font-family: 'Space Grotesk', monospace;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 500;
       color: var(--text-muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
+      letter-spacing: normal;
       margin-top: 4px;
     }
 
@@ -426,7 +435,7 @@
         <polygon points="16,327 638,155 638,471 498,609 16,609" fill="#FFFFFF" />
       </svg>
       <div>
-        <div class="brand-title">dasyu <span class="red">दस्यु</span></div>
+        <div class="brand-title">dasyu<span class="devanagari">दस्यु</span></div>
         <div class="brand-subtitle"><span class="red">The Outlaw of the Web.</span> Roam links, capture snapshots, extract treasure. • Automated Crawl &amp; Audit Report</div>
       </div>
     </div>

@@ -40,3 +40,20 @@ export interface DasyuPlugin {
    */
   onComplete?: () => Promise<void> | void;
 }
+
+/**
+ * Type-safe helper for defining a custom Dasyu plugin.
+ *
+ * @example
+ * ```ts
+ * export default definePlugin({
+ *   name: 'my-custom-plugin',
+ *   async onPageLoad(ctx) {
+ *     console.log('Inspecting:', ctx.url);
+ *   },
+ * });
+ * ```
+ */
+export function definePlugin(plugin: DasyuPlugin): DasyuPlugin {
+  return plugin;
+}

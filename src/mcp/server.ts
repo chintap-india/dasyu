@@ -89,6 +89,8 @@ export async function startMcpServer(): Promise<void> {
                   seoAudit: { type: 'boolean', description: 'Run SEO & metadata audit on crawled pages', default: false },
                   delay: { type: 'number', description: 'Delay in milliseconds between page requests' },
                   dismissModals: { type: 'boolean', description: 'Dismiss cookie banners and modals', default: true },
+                  exploreModals: { type: 'boolean', description: 'Detect UI framework and explore interactive modals/dialogs', default: false },
+                  maxModalsPerPage: { type: 'number', description: 'Maximum modals to explore per page (default: 5)', default: 5 },
                 },
                 required: ['url'],
               },
@@ -145,6 +147,8 @@ export async function startMcpServer(): Promise<void> {
             storageState: args.auth,
             delay: args.delay ? Number(args.delay) : undefined,
             dismissModals: args.dismissModals !== false,
+            exploreModals: Boolean(args.exploreModals),
+            maxModalsPerPage: Number(args.maxModalsPerPage) || 5,
             plugins,
           });
 

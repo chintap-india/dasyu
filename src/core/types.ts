@@ -27,8 +27,81 @@ export interface CrawlOptions {
   scroll?: boolean;
   /** Automatically attempt to detect and dismiss cookie consent banners and modal overlays. */
   dismissModals?: boolean;
+  /** Automatically detect underlying UI frameworks and explore interactive modals/dialogs. */
+  exploreModals?: boolean;
+  /** Maximum number of modals to explore per page. Default is 5. */
+  maxModalsPerPage?: number;
   /** Optional array of plugins for lifecycle hook extensions (e.g., accessibility auditing). */
   plugins?: DasyuPlugin[];
+  /** Optional file paths or package names for external custom user plugins to load dynamically. */
+  pluginPaths?: string[];
+  /** Optional custom technology/framework detection rules (modeled after Lighthouse Stacks / Wappalyzer). */
+  techRules?: TechDetectionRule[];
+}
+
+/**
+ * A technology or framework detection rule (modeled after Lighthouse Stacks & Wappalyzer).
+ */
+export interface TechDetectionRule {
+  /** Unique identifier for the technology (e.g., 'angular', 'react', 'tailwind') */
+  id: string;
+  /** Display name (e.g., 'Angular', 'React', 'Tailwind CSS') */
+  name: string;
+  /** Category classification */
+  category: 'framework' | 'ui' | 'library' | 'cms' | 'router';
+  /** Optional documentation or project website URL */
+  website?: string;
+  /** Window global variable properties to check (e.g., ['ng', 'React']) */
+  globals?: string[];
+  /** DOM element selector queries to match (e.g., ['[ng-version]', '[data-reactroot]']) */
+  dom?: string[];
+  /** HTML meta tag attributes to match */
+  meta?: Record<string, string>;
+  /** Optional regex pattern string to extract the version from matched text/attributes */
+  versionPattern?: string;
+}
+
+/**
+ * Information on the underlying UI framework and component libraries detected on the page.
+ */
+export interface UiFrameworkInfo {
+  /** The detected frontend framework (e.g., 'Angular', 'React', 'Vue', 'Svelte', 'Next.js', 'Nuxt', 'Static') */
+  framework: string;
+  /** Detected framework version, if available */
+  version?: string;
+  /** Component or modal libraries detected (e.g., 'Angular CDK / Material', 'Radix UI', 'Bootstrap', 'HTML5 Dialog') */
+  componentLibraries: string[];
+  /** Whether the page appears to be a client-rendered Single Page Application */
+  isSpa: boolean;
+  /** Detected router type (e.g., 'Angular Router', 'React Router', 'Next.js', 'History API', 'Hash') */
+  routerType?: string;
+}
+
+/**
+ * A form input, dropdown, or toggle control discovered inside a modal.
+ */
+export interface ModalFormField {
+  name: string;
+  type: string;
+  label?: string;
+  options?: string[];
+  value?: string;
+}
+
+/**
+ * Metadata and extracted features for an interactive modal or dialog explored on a page.
+ */
+export interface ModalFeature {
+  id: string;
+  triggerSelector?: string;
+  triggerText: string;
+  modalTitle: string;
+  modalType: 'details' | 'status-picker' | 'edit-form' | 'tour-dialog' | 'dialog';
+  content?: string;
+  fields?: ModalFormField[];
+  actions?: string[];
+  screenshotPath?: string;
+  discoveredUrls?: string[];
 }
 
 /**
@@ -71,6 +144,10 @@ export interface PageData {
   links: string[];
   /** Detailed outbound link metadata including anchor text, target, and rel attributes */
   linkDetails?: LinkMetadata[];
+  /** Extracted UI framework and SPA architecture information */
+  uiFramework?: UiFrameworkInfo;
+  /** Discovered and explored interactive modals/dialogs */
+  modals?: ModalFeature[];
   /** Additional extracted page metadata (meta description, open graph tags, etc.) */
   metadata?: Record<string, any>;
   /** Error message if the navigation or processing failed */
