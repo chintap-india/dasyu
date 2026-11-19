@@ -4,6 +4,8 @@ dist/
 *.log
 output/
 results/
+auth.json
+*-session.json
 test-*/
 coverage/
 .claude/settings.local.json

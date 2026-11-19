@@ -8,6 +8,15 @@
   </picture>
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/@chintap/dasyu"><img src="https://img.shields.io/npm/v/@chintap/dasyu.svg?color=E50914&label=@chintap/dasyu" alt="npm package" /></a>
+  <a href="https://www.npmjs.com/package/@chintap/dasyu"><img src="https://img.shields.io/npm/dm/@chintap/dasyu.svg" alt="npm downloads" /></a>
+  <a href="https://github.com/chintap-india/dasyu"><img src="https://img.shields.io/badge/github-chintap--india%2Fdasyu-181717.svg?logo=github" alt="GitHub" /></a>
+  <a href="https://chintap.com/dasyu"><img src="https://img.shields.io/badge/web-chintap.com%2Fdasyu-EA1C24.svg" alt="Website" /></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg" alt="Node version" />
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
+</p>
+
 > *The Outlaw of the Web. Roam links, capture snapshots, extract treasure.* A modern TypeScript/Node.js utility powered by Playwright to crawl web applications up to $N$ levels deep, capture full-page DOM screenshots, and extract clean Markdown content.
 
 In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, or outlaw who refused to submit to orthodox rules. **Dasyu** roams the information superhighway, bypassing fluff, capturing visual snapshots in time, and extracting raw content treasure.
@@ -28,43 +37,51 @@ In Sanskrit, **Dasyu** (दस्यु) means a fierce non-conformist, rover, o
 
 ---
 
-## 🚀 Installation & Setup (Local Beta)
+## 🚀 Installation & Quick Start
 
-> **Note:** Official NPM registry publishing is held on our Roadmap while we dogfood Dasyu internally. For now, install and run Dasyu directly from the cloned repository!
+Dasyu is available as a public package on npm under [`@chintap/dasyu`](https://www.npmjs.com/package/@chintap/dasyu).
 
-### Quick Start (Global CLI Link)
+### Option 1: Zero-Install via `npx` (Fastest)
+
+Run Dasyu on any webpage without installing anything permanently:
 
 ```bash
-# 1. Clone the repository (or navigate to your local dasyu folder)
-git clone https://github.com/chintap-india/dasyu.git
-cd dasyu
+# Capture full-page screenshot & markdown content
+npx @chintap/dasyu crawl https://chintap.com --depth 1 --content
 
-# 2. Install dependencies & compile TypeScript
-npm install
-npm run build
-
-# 3. Ensure Playwright browser binaries are ready
-npx playwright install chromium
-
-# 4. Link globally so `dasyu` and `dasyu-mcp` are available in any terminal:
-npm link
+# Or launch the interactive headful login bridge
+npx @chintap/dasyu auth login https://today.chintap.com/tasks -o ./auth.json
 ```
 
-Once linked, test your global installation anywhere:
+### Option 2: Global Installation (Recommended for CLI & REPL)
+
+Install globally so `dasyu` and `dasyu-mcp` are available anywhere in your terminal:
+
 ```bash
+npm install -g @chintap/dasyu
+
+# Verify installation
 dasyu --version
 dasyu --help
 ```
 
-### Running Locally Without Linking
+### Option 3: Local Project Dependency
 
-If you prefer not to link globally, you can invoke the binaries directly:
+Install Dasyu as a library in your Node.js / TypeScript project:
+
 ```bash
-# Run Dasyu CLI directly via Node
-node ./bin/dasyu.js --help
+npm install @chintap/dasyu
+```
 
-# Run Dasyu MCP Server directly
-node ./bin/dasyu-mcp.js
+### Option 4: From Source (For Contributors)
+
+```bash
+git clone https://github.com/chintap-india/dasyu.git
+cd dasyu
+npm install
+npm run build
+npx playwright install chromium
+npm link
 ```
 
 ---
@@ -391,7 +408,7 @@ dasyu> clean
 ## 📚 Programmatic Library Usage
 
 ```typescript
-import { DasyuCrawler } from 'dasyu';
+import { DasyuCrawler } from '@chintap/dasyu';
 
 async function main() {
   const crawler = new DasyuCrawler({
@@ -428,11 +445,11 @@ Dasyu includes a native **Model Context Protocol (MCP)** server over standard I/
 
 ### Launching the MCP Server
 ```bash
-# Launch directly via CLI
-dasyu mcp
+# Zero-install via npx
+npx -y @chintap/dasyu mcp
 
-# Or via the standalone bin executable
-node ./bin/dasyu-mcp.js
+# Or via global CLI
+dasyu mcp
 ```
 
 ### Agent Configuration Example
@@ -442,8 +459,8 @@ Add Dasyu to your agent's MCP settings (e.g. `.gemini/settings.json`, `claude_de
 {
   "mcpServers": {
     "dasyu": {
-      "command": "node",
-      "args": ["/absolute/path/to/dasyu/bin/dasyu-mcp.js"]
+      "command": "npx",
+      "args": ["-y", "@chintap/dasyu", "mcp"]
     }
   }
 }
@@ -456,13 +473,13 @@ Available MCP tools:
 
 ---
 
-## 🗺️ Roadmap & Future Plans
+## 🗺️ Roadmap & Ecosystem
 
 ### 🏢 Organization & Repository
 The official home of Dasyu is hosted under the **`chintap-india`** GitHub organization at [`github.com/chintap-india/dasyu`](https://github.com/chintap-india/dasyu) with the web homepage at [`chintap.com/dasyu`](https://chintap.com/dasyu).
 
-### 📦 Hardening & NPM Registry Publishing
-Public NPM publishing (`npm i -g dasyu`) is intentionally held while we dogfood Dasyu across internal web apps built in other threads. Releases and version bumps follow semantic versioning:
+### 📦 NPM Package Distribution
+Dasyu is published on the public npm registry under [`@chintap/dasyu`](https://www.npmjs.com/package/@chintap/dasyu). Releases and version bumps follow semantic versioning:
 ```bash
 # Bump patch or minor version
 npm run bump:patch

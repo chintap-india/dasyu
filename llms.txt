@@ -1,0 +1,89 @@
+# Dasyu (दस्यु)
+
+> Dasyu — The Outlaw of the Web. Roam links, capture snapshots, extract treasure.
+> High-performance TypeScript and Node.js website crawler, visual DOM snapshot engine, and Markdown extractor powered by Playwright with interactive headful authentication bridge and Model Context Protocol (MCP) server for AI coding agents.
+
+## Canonical Resources
+- NPM Package: https://www.npmjs.com/package/@chintap/dasyu
+- GitHub Repository: https://github.com/chintap-india/dasyu
+- Web Homepage: https://chintap.com/dasyu
+- Issues & Support: https://github.com/chintap-india/dasyu/issues
+
+## Package Coordinates
+- NPM Scope & Name: `@chintap/dasyu`
+- CLI Binaries: `dasyu`, `dasyu-mcp`
+- Node Requirements: `>=18.0.0`
+- License: MIT
+
+## Quick Installation & Invocation
+- Zero-Install: `npx @chintap/dasyu crawl <url> [options]`
+- Global CLI: `npm install -g @chintap/dasyu`
+- Project Dependency: `npm install @chintap/dasyu`
+- AI Agent MCP Server: `npx -y @chintap/dasyu mcp`
+
+## Core Capabilities
+- Depth-Controlled BFS Web Crawler: Recursively crawls URLs up to N levels deep with domain filtering and deduplication.
+- Full-Page DOM Visual Snapshots: Captures settled, full-height screenshots of modern SPAs (Angular, React, Vue, Next.js).
+- Clean Markdown & Metadata Extraction: Extracts semantic readability content, OpenGraph tags, JSON-LD Schema.org, and headings hierarchy.
+- Interactive Headful Auth Bridge: `dasyu auth login <url> -o ./auth.json` launches a real browser window to complete 2FA/SSO/Netlify Identity logins and captures `storageState` (cookies + localStorage).
+- UI Framework Detection: Identifies Angular, React, Vue, Next.js, Nuxt, Svelte, Angular Material, Radix UI, Bootstrap, Headless UI.
+- Interactive Modal & Drawer Explorer: `--explore-modals` automatically triggers modals, dialogs, drawers, and status menus, snapshots their contents, and extracts deep links.
+- Interactive Visual HTML Dashboard: Generates a self-contained, dark-mode `report.html` with instant live search and full-screen screenshot lightboxes.
+- Model Context Protocol (MCP) Server: Stdio JSON-RPC interface exposing `dasyu_crawl`, `dasyu_snapshot`, and `dasyu_inspect_auth` tools directly to AI coding agents.
+- RAG Semantic Chunking: `--rag` chunks page content by headings and paragraphs for vector embeddings (`rag-chunks.jsonl`).
+- Relational Link Graph: `--graph` exports site topology into JSON and Mermaid diagrams (`site-graph.mmd`).
+- Zero Orphaned Browsers: Process signal handlers (`SIGINT`, `SIGTERM`, `beforeExit`) ensure no lingering Chromium processes.
+
+## CLI Usage Reference
+- `dasyu crawl <url> [options]`:
+  - `-d, --depth <N>`: Maximum BFS crawl depth (default: 1, range: 1-5).
+  - `-c, --concurrency <N>`: Concurrent browser pages (default: 3).
+  - `-o, --output <dir>`: Target output directory (default: `./output`).
+  - `--content`: Extract clean Markdown and JSON metadata.
+  - `-m, --explore-modals`: Automatically explore modal dialogs and drawers.
+  - `--max-modals <N>`: Max modal triggers to explore per page (default: 3).
+  - `--auth <path>`: Playwright storageState JSON for authenticated crawls.
+  - `--detect-auth`: Anomalyco Browse plugin to monitor login walls and 401/403 barriers.
+  - `--a11y`: Automated WCAG 2.1 accessibility audits via axe-core.
+  - `--seo`: SEO and metadata quality audit.
+  - `--rag`: Export semantic chunks to `rag-chunks.jsonl`.
+  - `--graph`: Export site link graph to `site-graph.json` and `site-graph.mmd`.
+  - `-p, --plugin <path>`: Load custom lifecycle plugin.
+  - `--config <path>`: Load configuration file (`dasyu.config.js`).
+
+- `dasyu auth login <url> [-o ./auth.json]`: Launch interactive browser to log in and capture session.
+- `dasyu auth inspect <path>`: Inspect cookies and localStorage origins in a storageState file.
+- `dasyu auth import <input> [-o ./auth.json]`: Import external cookies or OpenCode Browse sessions.
+- `dasyu view [dir]`: Open generated visual HTML report in default browser.
+- `dasyu clean [dir]`: Clean output directories.
+- `dasyu mcp`: Launch native Model Context Protocol server over stdio.
+- `dasyu repl` (or bare `dasyu`): Enter interactive terminal shell.
+
+## MCP Configuration
+For Antigravity, Claude Desktop, Cursor, Gemini:
+```json
+{
+  "mcpServers": {
+    "dasyu": {
+      "command": "npx",
+      "args": ["-y", "@chintap/dasyu", "mcp"]
+    }
+  }
+}
+```
+
+## Programmatic TypeScript Usage
+```typescript
+import { DasyuCrawler } from '@chintap/dasyu';
+
+const crawler = new DasyuCrawler({
+  startUrl: 'https://chintap.com',
+  maxDepth: 2,
+  concurrency: 3,
+  extractContent: true,
+  outputDir: './output',
+});
+
+const report = await crawler.run();
+console.log(`Crawl finished with ${report.pages.length} pages.`);
+```

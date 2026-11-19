@@ -23,7 +23,8 @@
   "files": [
     "dist",
     "bin",
-    "README.md"
+    "README.md",
+    "llms.txt"
   ],
   "scripts": {
     "build": "tsup",
