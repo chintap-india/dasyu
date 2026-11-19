@@ -82,6 +82,18 @@ describe('HTML Visual Report Generator', () => {
     expect(htmlContent).toContain('id="searchInput"');
     expect(htmlContent).toContain('id="lightboxModal"');
     expect(htmlContent).toContain('id="mdModal"');
+
+    // Check Site Constellation & Relational Topology Graph
+    expect(htmlContent).toContain('id="constellationSection"');
+    expect(htmlContent).toContain('Site Constellation &amp; Relational Topology');
+    expect(htmlContent).toContain('id="youAreHereBeacon"');
+    expect(htmlContent).toContain('beacon-pulse-ring');
+    expect(htmlContent).toContain('id="graphInspectorBar"');
+    expect(htmlContent).toContain('id="btnShowBoth"');
+    expect(htmlContent).toContain('id="btnGraphOnly"');
+    expect(htmlContent).toContain('id="btnCardsOnly"');
+    expect(htmlContent).toContain('id="gnode_0"');
+    expect(htmlContent).toContain('locateInGraph(0)');
   });
 
   it('should escape HTML characters in title and URL to prevent XSS injection', async () => {

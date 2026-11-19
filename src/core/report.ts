@@ -31,8 +31,9 @@ export interface ReportOptions {
 /**
  * Escapes HTML characters for safe template rendering.
  */
-function escapeHtml(str: string): string {
-  return str
+function escapeHtml(str?: string | null): string {
+  if (!str) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -79,6 +80,157 @@ export async function generateHtmlReport(
   const finalAvgA11y = pagesWithA11y > 0 ? Math.round(avgA11yScore / pagesWithA11y) : null;
 
   // Prepare page cards data
+  const clientGraphData = await Promise.all(
+    result.pages.map(async (page, idx) => {
+      let relScreenshot = '';
+      if (page.screenshotPath) {
+        relScreenshot = path.relative(outputDir, path.resolve(process.cwd(), page.screenshotPath));
+      }
+      let rawSnippet = '';
+      if (page.contentPath) {
+        try {
+          const rawMd = await fs.readFile(path.resolve(process.cwd(), page.contentPath), 'utf-8');
+          rawSnippet = rawMd.slice(0, 1500) + (rawMd.length > 1500 ? '\n\n... (truncated for preview)' : '');
+        } catch {}
+      }
+      return {
+        index: idx,
+        id: `node_${idx + 1}`,
+        url: escapeHtml(page.url),
+        title: escapeHtml(page.title || page.url),
+        rawUrl: page.url,
+        depth: page.depth || 0,
+        status: page.status || 200,
+        parentUrl: page.parentUrl || '',
+        screenshotRel: relScreenshot,
+        markdownSnippet: rawSnippet,
+        hasMarkdown: Boolean(page.contentPath),
+      };
+    })
+  );
+
+  // Layout nodes depth-wise and breadth-wise for Constellation Topology
+  const maxDepth = Math.max(...result.pages.map((p) => p.depth || 0), 0);
+  const depthTiers = new Map<number, number[]>();
+  result.pages.forEach((p, idx) => {
+    const d = p.depth || 0;
+    if (!depthTiers.has(d)) depthTiers.set(d, []);
+    depthTiers.get(d)!.push(idx);
+  });
+
+  const maxNodesInTier = Math.max(
+    ...Array.from(depthTiers.values()).map((arr) => arr.length),
+    1
+  );
+
+  const svgWidth = Math.max(1000, (maxDepth + 1) * 320 + 80);
+  const svgHeight = Math.max(460, maxNodesInTier * 86 + 100);
+
+  const nodePositions: { x: number; y: number }[] = [];
+  const urlToIndex = new Map<string, number>();
+
+  result.pages.forEach((p, idx) => {
+    urlToIndex.set(p.url, idx);
+  });
+
+  for (let d = 0; d <= maxDepth; d++) {
+    const tier = depthTiers.get(d) || [];
+    const count = tier.length;
+    const tierX =
+      maxDepth === 0 ? svgWidth / 2 : 100 + (d * (svgWidth - 200)) / maxDepth;
+
+    tier.forEach((pageIdx, tierPos) => {
+      const tierY = 70 + ((tierPos + 0.5) * (svgHeight - 140)) / count;
+      nodePositions[pageIdx] = { x: Math.round(tierX), y: Math.round(tierY) };
+    });
+  }
+
+  interface SvgEdge {
+    sourceIdx: number;
+    targetIdx: number;
+    dPath: string;
+  }
+  const svgEdges: SvgEdge[] = [];
+  const edgeSet = new Set<string>();
+
+  result.pages.forEach((p, childIdx) => {
+    if ((p.depth || 0) > 0) {
+      let parentIdx: number | undefined;
+      if (p.parentUrl && urlToIndex.has(p.parentUrl)) {
+        parentIdx = urlToIndex.get(p.parentUrl);
+      } else {
+        const prevTier = depthTiers.get((p.depth || 1) - 1);
+        if (prevTier && prevTier.length > 0) {
+          parentIdx = prevTier[0];
+        } else {
+          parentIdx = 0;
+        }
+      }
+
+      if (parentIdx !== undefined && parentIdx !== childIdx) {
+        const edgeKey = `${parentIdx}->${childIdx}`;
+        if (!edgeSet.has(edgeKey)) {
+          edgeSet.add(edgeKey);
+          const pPos = nodePositions[parentIdx] || { x: 100, y: 70 };
+          const cPos = nodePositions[childIdx] || { x: 400, y: 70 };
+          const midX = Math.round((pPos.x + cPos.x) / 2);
+          const dPath = `M ${pPos.x} ${pPos.y} C ${midX} ${pPos.y}, ${midX} ${cPos.y}, ${cPos.x} ${cPos.y}`;
+          svgEdges.push({ sourceIdx: parentIdx, targetIdx: childIdx, dPath });
+        }
+      }
+    }
+  });
+
+  const tierGuidesSvg: string[] = [];
+  for (let d = 0; d <= maxDepth; d++) {
+    const tierX =
+      maxDepth === 0 ? svgWidth / 2 : 100 + (d * (svgWidth - 200)) / maxDepth;
+    const label =
+      d === 0
+        ? 'DEPTH 0 · SEED ENTRY'
+        : `DEPTH ${d} · ${d === 1 ? 'PRIMARY DISCOVERY' : 'DEEP WORKSPACE'}`;
+    tierGuidesSvg.push(`
+      <line x1="${tierX}" y1="36" x2="${tierX}" y2="${svgHeight - 36}" stroke="#222938" stroke-dasharray="4 6" stroke-width="1.2" />
+      <text x="${tierX}" y="28" text-anchor="middle" fill="#6B7280" font-family="'Space Grotesk', monospace" font-size="10.5" font-weight="600" letter-spacing="1">${label}</text>
+    `);
+  }
+
+  const svgNodes = result.pages.map((p, idx) => {
+    const pos = nodePositions[idx] || { x: 100, y: 70 };
+    const isRoot = (p.depth || 0) === 0;
+    const radius = isRoot ? 14 : 10;
+    const safeTitle = escapeHtml(p.title || p.url);
+    const safeUrl = escapeHtml(p.url);
+    const shortTitle = escapeHtml(
+      (p.title || p.url).slice(0, 26) +
+        ((p.title || p.url).length > 26 ? '…' : '')
+    );
+    let pathname = '/';
+    try {
+      pathname = new URL(p.url).pathname;
+    } catch {}
+    const shortUrl = escapeHtml(pathname);
+    const statusColor =
+      (p.status || 200) < 300
+        ? '#10B981'
+        : (p.status || 200) < 400
+        ? '#F59E0B'
+        : '#EF4444';
+    const modalsCount = (p.metadata?.modals as any[])?.length || 0;
+
+    return `
+      <g class="graph-node" id="gnode_${idx}" data-index="${idx}" onclick="selectGraphNode(${idx})" transform="translate(${pos.x}, ${pos.y})">
+        <circle class="node-glow" r="${radius + 7}" fill="${isRoot ? 'rgba(234, 28, 36, 0.2)' : 'rgba(96, 165, 250, 0.15)'}" />
+        <circle class="node-base" r="${radius}" fill="#11141D" stroke="${isRoot ? '#EA1C24' : '#344052'}" stroke-width="${isRoot ? 2.5 : 2}" />
+        <circle cx="${radius - 3}" cy="${-(radius - 3)}" r="3.5" fill="${statusColor}" />
+        ${modalsCount > 0 ? `<polygon points="${-radius - 2},${-radius} ${-radius + 4},${-radius - 6} ${-radius + 10},${-radius} ${-radius + 4},${-radius + 6}" fill="#F87171"><title>${modalsCount} Modals explored</title></polygon>` : ''}
+        <text x="${isRoot ? -20 : 18}" y="-4" text-anchor="${isRoot ? 'end' : 'start'}" fill="#FFFFFF" font-size="12" font-weight="700">${shortTitle}</text>
+        <text x="${isRoot ? -20 : 18}" y="12" text-anchor="${isRoot ? 'end' : 'start'}" fill="#9AA5B5" font-family="'Space Grotesk', monospace" font-size="10.5">${shortUrl}</text>
+        <title>${safeTitle} (${safeUrl}) - Status: ${p.status}, Depth: ${p.depth}</title>
+      </g>
+    `;
+  });
+
   const pageCardsHtml = await Promise.all(
     result.pages.map(async (page, index) => {
       // Screenshot relative path from report.html
@@ -146,10 +298,12 @@ export async function generateHtmlReport(
             </div>
             ${modals.map((m: any) => {
               const relModalShot = m.screenshotPath ? path.relative(outputDir, m.screenshotPath) : '';
+              const mTitle = m.modalTitle || m.name || m.title || 'Modal';
+              const mType = m.modalType || m.status || 'dialog';
               return `
                 <div class="modal-pill">
-                  <span><strong>${escapeHtml(m.modalTitle)}</strong> (${escapeHtml(m.modalType)})</span>
-                  ${relModalShot ? `<a href="${relModalShot}" target="_blank" onclick="event.stopPropagation(); openLightbox('${relModalShot}', '${escapeHtml(m.modalTitle)}')">View ↗</a>` : ''}
+                  <span><strong>${escapeHtml(mTitle)}</strong> (${escapeHtml(mType)})</span>
+                  ${relModalShot ? `<a href="${relModalShot}" target="_blank" onclick="event.stopPropagation(); openLightbox('${relModalShot}', '${escapeHtml(mTitle)}')">View ↗</a>` : ''}
                 </div>
               `;
             }).join('')}
@@ -162,7 +316,7 @@ export async function generateHtmlReport(
       const escapedSnippet = escapeHtml(markdownSnippet);
 
       return `
-        <div class="page-card" data-url="${escapedUrl}" data-title="${escapedTitle}" data-status="${page.status}">
+        <div class="page-card" id="card_${index}" data-url="${escapedUrl}" data-title="${escapedTitle}" data-status="${page.status}">
           <div class="card-header">
             <div class="card-badges">
               ${statusBadge}
@@ -208,6 +362,7 @@ export async function generateHtmlReport(
                 ? `<button class="action-btn primary" onclick="showMarkdownModal('${escapedTitle}', \`${escapedSnippet}\`)">View Markdown</button>`
                 : ''
             }
+            <button class="action-btn" onclick="locateInGraph(${index})" title="Locate page in Constellation Graph">🪐 Graph</button>
           </div>
         </div>
       `;
@@ -376,6 +531,170 @@ export async function generateHtmlReport(
     }
     .kpi-value.good { color: #10B981; }
     .kpi-value.warn { color: #F59E0B; }
+
+    /* Constellation Network Graph Section */
+    .constellation-section {
+      padding: 0 48px 32px 48px;
+    }
+    .constellation-card {
+      background: rgba(18, 22, 31, 0.95);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .constellation-header {
+      padding: 20px 28px 16px 28px;
+      border-bottom: 1px solid rgba(52, 64, 82, 0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: rgba(23, 27, 37, 0.5);
+    }
+    .constellation-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .constellation-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .constellation-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .view-toggles {
+      display: flex;
+      gap: 6px;
+      background: #11141D;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+    }
+    .view-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .view-btn:hover { color: #FFF; }
+    .view-btn.active {
+      background: rgba(234, 28, 36, 0.2);
+      color: #FF5A64;
+      border: 1px solid rgba(234, 28, 36, 0.4);
+    }
+
+    .graph-viewport {
+      width: 100%;
+      min-height: 420px;
+      overflow-x: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, rgba(234, 28, 36, 0.04) 0%, rgba(11, 13, 18, 0.8) 100%);
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      min-width: 900px;
+    }
+    .graph-edge {
+      fill: none;
+      stroke: rgba(154, 165, 181, 0.24);
+      stroke-width: 1.5;
+      transition: stroke 0.25s, stroke-width 0.25s;
+    }
+    .graph-edge.active {
+      stroke: var(--accent-red);
+      stroke-width: 2.75;
+      stroke-opacity: 0.95;
+    }
+    .graph-node {
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .graph-node:hover circle.node-base,
+    .graph-node.selected circle.node-base {
+      stroke: var(--accent-red) !important;
+      stroke-width: 2.5 !important;
+    }
+    .graph-node text {
+      user-select: none;
+      transition: fill 0.2s;
+    }
+
+    @keyframes beacon-ping {
+      0% { r: 6px; opacity: 0.95; }
+      50% { r: 20px; opacity: 0.35; }
+      100% { r: 34px; opacity: 0; }
+    }
+    .beacon-pulse-ring {
+      animation: beacon-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+
+    .graph-inspector-bar {
+      padding: 14px 28px;
+      background: rgba(17, 20, 29, 0.95);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .inspector-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .inspector-beacon-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      box-shadow: 0 0 12px var(--accent-red);
+      display: inline-block;
+    }
+    .inspector-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .inspector-url {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .inspector-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-card.card-highlight {
+      border-color: var(--accent-red) !important;
+      box-shadow: 0 0 28px rgba(234, 28, 36, 0.45) !important;
+      transform: translateY(-4px);
+    }
 
     /* Controls Bar */
     .controls-bar {
@@ -765,6 +1084,79 @@ export async function generateHtmlReport(
     }
   </div>
 
+  <section class="constellation-section" id="constellationSection">
+    <div class="constellation-card">
+      <div class="constellation-header">
+        <div class="constellation-title-group">
+          <div class="constellation-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA1C24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            <span>Site Constellation &amp; Relational Topology</span>
+          </div>
+          <div class="constellation-subtitle">Interactive depth &amp; breadth graph of crawled pages with pulsing &quot;You Are Here&quot; beacon.</div>
+        </div>
+        <div class="view-toggles">
+          <button class="view-btn active" id="btnShowBoth" onclick="setViewMode('both')">Split View</button>
+          <button class="view-btn" id="btnGraphOnly" onclick="setViewMode('graph')">Graph Only</button>
+          <button class="view-btn" id="btnCardsOnly" onclick="setViewMode('cards')">Cards Only</button>
+        </div>
+      </div>
+
+      <div class="graph-viewport" id="graphViewport">
+        <svg class="graph-svg" id="constellationSvg" viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="xMidYMid meet">
+          <!-- Background Grid & Tier Guides -->
+          <g class="tier-guides">
+            ${tierGuidesSvg.join('\n')}
+          </g>
+
+          <!-- Edges (Cubic Beziers) -->
+          <g class="graph-edges">
+            ${svgEdges
+              .map(
+                (e) => `
+              <path class="graph-edge" id="edge_${e.sourceIdx}_${e.targetIdx}" data-source="${e.sourceIdx}" data-target="${e.targetIdx}" d="${e.dPath}" />
+            `
+              )
+              .join('\n')}
+          </g>
+
+          <!-- Pulsing Beacon ('You Are Here') -->
+          <g id="youAreHereBeacon" transform="translate(${nodePositions[0]?.x || 100}, ${nodePositions[0]?.y || 70})" style="pointer-events: none;">
+            <circle class="beacon-pulse-ring" cx="0" cy="0" r="16" fill="rgba(234, 28, 36, 0.45)" stroke="#EA1C24" stroke-width="1.5" />
+            <circle cx="0" cy="0" r="5" fill="#FFFFFF" stroke="#EA1C24" stroke-width="2" />
+          </g>
+
+          <!-- Nodes -->
+          <g class="graph-nodes">
+            ${svgNodes.join('\n')}
+          </g>
+        </svg>
+      </div>
+
+      <!-- Inspector Bar at bottom of Graph -->
+      <div class="graph-inspector-bar" id="graphInspectorBar">
+        <div class="inspector-left">
+          <span class="inspector-beacon-dot"></span>
+          <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #EA1C24; letter-spacing: 0.08em;">Active Node:</span>
+          <span class="inspector-title" id="inspectorTitle">${escapeHtml(result.pages[0]?.title || result.pages[0]?.url || 'Seed')}</span>
+          <span class="inspector-url" id="inspectorUrl">${escapeHtml(result.pages[0]?.url || '')}</span>
+          <span class="status-badge status-200" id="inspectorBadge">Depth ${result.pages[0]?.depth || 0}</span>
+        </div>
+        <div class="inspector-actions">
+          <button class="action-btn" id="inspectorJumpBtn" onclick="scrollToCard(0)">🎯 Jump to Card</button>
+          <button class="action-btn" id="inspectorShotBtn" onclick="openNodeLightbox(0)">🖼️ Screenshot</button>
+          <button class="action-btn" id="inspectorMdBtn" onclick="openNodeMarkdown(0)" style="${result.pages[0]?.contentPath ? '' : 'display: none;'}">📄 Markdown</button>
+          <a class="action-btn primary" id="inspectorVisitBtn" href="${escapeHtml(result.pages[0]?.url || '#')}" target="_blank" rel="noopener">Visit Page ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="controls-bar">
     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search crawled pages by title or URL..." oninput="filterCards()" />
     <span style="color: var(--text-muted); font-size: 14px;">Showing <strong id="visibleCount" style="color: #FFF;">${result.pages.length}</strong> of ${result.pages.length} pages</span>
@@ -801,6 +1193,129 @@ export async function generateHtmlReport(
   </footer>
 
   <script>
+    const graphNodesData = ${JSON.stringify(clientGraphData).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')};
+    const nodePositions = ${JSON.stringify(nodePositions)};
+    let activeNodeIndex = 0;
+    let currentViewMode = 'both';
+
+    function selectGraphNode(index) {
+      if (!graphNodesData[index]) return;
+      activeNodeIndex = index;
+      const pos = nodePositions[index];
+      const beacon = document.getElementById('youAreHereBeacon');
+      if (beacon && pos) {
+        beacon.setAttribute('transform', 'translate(' + pos.x + ', ' + pos.y + ')');
+      }
+
+      // Highlight active node
+      document.querySelectorAll('.graph-node').forEach(n => n.classList.remove('selected'));
+      const activeNode = document.getElementById('gnode_' + index);
+      if (activeNode) activeNode.classList.add('selected');
+
+      // Highlight connected edges
+      document.querySelectorAll('.graph-edge').forEach(edge => {
+        const s = parseInt(edge.getAttribute('data-source') || '-1', 10);
+        const t = parseInt(edge.getAttribute('data-target') || '-1', 10);
+        if (s === index || t === index) {
+          edge.classList.add('active');
+        } else {
+          edge.classList.remove('active');
+        }
+      });
+
+      // Update Inspector Bar
+      const item = graphNodesData[index];
+      if (item) {
+        const titleEl = document.getElementById('inspectorTitle');
+        if (titleEl) titleEl.innerText = item.title;
+        const urlEl = document.getElementById('inspectorUrl');
+        if (urlEl) urlEl.innerText = item.url;
+        const badgeEl = document.getElementById('inspectorBadge');
+        if (badgeEl) badgeEl.innerText = 'Depth ' + item.depth + ' · Status ' + item.status;
+        const jumpBtn = document.getElementById('inspectorJumpBtn');
+        if (jumpBtn) jumpBtn.setAttribute('onclick', 'scrollToCard(' + index + ')');
+        const shotBtn = document.getElementById('inspectorShotBtn');
+        if (shotBtn) {
+          shotBtn.style.display = item.screenshotRel ? 'inline-block' : 'none';
+          shotBtn.setAttribute('onclick', 'openNodeLightbox(' + index + ')');
+        }
+        const mdBtn = document.getElementById('inspectorMdBtn');
+        if (mdBtn) {
+          mdBtn.style.display = item.hasMarkdown ? 'inline-block' : 'none';
+          mdBtn.setAttribute('onclick', 'openNodeMarkdown(' + index + ')');
+        }
+        const visitBtn = document.getElementById('inspectorVisitBtn');
+        if (visitBtn) visitBtn.href = item.url;
+      }
+    }
+
+    function scrollToCard(index) {
+      if (currentViewMode === 'graph') {
+        setViewMode('both');
+      }
+      const card = document.getElementById('card_' + index);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('card-highlight');
+        setTimeout(() => card.classList.remove('card-highlight'), 2200);
+      }
+    }
+
+    function locateInGraph(index) {
+      if (currentViewMode === 'cards') {
+        setViewMode('both');
+      }
+      selectGraphNode(index);
+      const sec = document.getElementById('constellationSection');
+      if (sec) {
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      const viewport = document.getElementById('graphViewport');
+      const pos = nodePositions[index];
+      if (viewport && pos) {
+        const targetLeft = pos.x - (viewport.clientWidth / 2);
+        viewport.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      }
+    }
+
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      const btnBoth = document.getElementById('btnShowBoth');
+      const btnGraph = document.getElementById('btnGraphOnly');
+      const btnCards = document.getElementById('btnCardsOnly');
+      const graphSec = document.getElementById('constellationSection');
+      const controlsBar = document.querySelector('.controls-bar');
+      const galleryGrid = document.getElementById('galleryGrid');
+
+      if (btnBoth) btnBoth.classList.toggle('active', mode === 'both');
+      if (btnGraph) btnGraph.classList.toggle('active', mode === 'graph');
+      if (btnCards) btnCards.classList.toggle('active', mode === 'cards');
+
+      if (graphSec) {
+        graphSec.style.display = (mode === 'cards') ? 'none' : 'block';
+      }
+      if (controlsBar) {
+        controlsBar.style.display = (mode === 'graph') ? 'none' : 'flex';
+      }
+      if (galleryGrid) {
+        galleryGrid.style.display = (mode === 'graph') ? 'none' : 'grid';
+      }
+    }
+
+    function openNodeLightbox(index) {
+      const item = graphNodesData[index];
+      if (item && item.screenshotRel) {
+        openLightbox(item.screenshotRel, item.title);
+      }
+    }
+
+    function openNodeMarkdown(index) {
+      const item = graphNodesData[index];
+      if (item && item.markdownSnippet) {
+        showMarkdownModal(item.title, item.markdownSnippet);
+      }
+    }
+
     function openLightbox(src, title) {
       document.getElementById('lightboxImg').src = src;
       document.getElementById('lightboxModal').classList.add('active');
@@ -819,13 +1334,13 @@ export async function generateHtmlReport(
     }
 
     function filterCards() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
       const cards = document.querySelectorAll('.page-card');
       let visible = 0;
       cards.forEach(card => {
         const url = (card.getAttribute('data-url') || '').toLowerCase();
         const title = (card.getAttribute('data-title') || '').toLowerCase();
-        if (url.includes(q) || title.includes(q)) {
+        if (!q || url.includes(q) || title.includes(q)) {
           card.style.display = 'flex';
           visible++;
         } else {
@@ -833,6 +1348,15 @@ export async function generateHtmlReport(
         }
       });
       document.getElementById('visibleCount').innerText = visible;
+
+      // Dim SVG nodes matching search
+      graphNodesData.forEach((item, idx) => {
+        const nodeEl = document.getElementById('gnode_' + idx);
+        if (nodeEl) {
+          const match = !q || item.url.toLowerCase().includes(q) || item.title.toLowerCase().includes(q);
+          nodeEl.style.opacity = match ? '1' : '0.18';
+        }
+      });
     }
 
     document.addEventListener('keydown', (e) => {
@@ -841,6 +1365,11 @@ export async function generateHtmlReport(
         closeMarkdownModal();
       }
     });
+
+    // Initialize with root seed selected
+    if (graphNodesData.length > 0) {
+      selectGraphNode(0);
+    }
   </script>
 </body>
 </html>`;
