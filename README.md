@@ -2,9 +2,9 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/dasyu-brand-horizontal-dark-2400.png">
-    <source media="(prefers-color-scheme: light)" srcset="./assets/dasyu-brand-horizontal-2400.png">
-    <img src="./assets/dasyu-brand-horizontal-dark-2400.png" alt="Dasyu (दस्यु) — The Outlaw of the Web" width="680" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://chintap.com/images/dasyu-brand-horizontal-dark-2400.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://chintap.com/images/dasyu-brand-horizontal-2400.png">
+    <img src="https://chintap.com/images/dasyu-brand-horizontal-dark-2400.png" alt="Dasyu (दस्यु) — The Outlaw of the Web" width="680" />
   </picture>
 </p>
 
@@ -148,7 +148,7 @@ dasyu clean ./my-snapshots
 Every Dasyu crawl automatically generates a standalone, zero-dependency dark-mode **`report.html`** dashboard. Inspect crawl health, browse full-page screenshots, search pages in real-time, view extracted Markdown, and zoom in on visual artifacts with zero external network dependencies.
 
 <p align="center">
-  <img src="./assets/dasyu-ui-dashboard.png" alt="Dasyu Interactive Visual HTML Dashboard — chintap.com Crawl Report" width="100%" />
+  <img src="https://chintap.com/images/dasyu-ui-dashboard.png" alt="Dasyu Interactive Visual HTML Dashboard — chintap.com Crawl Report" width="100%" />
 </p>
 
 ### Dashboard Capabilities
