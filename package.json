@@ -17,8 +17,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "dasyu": "./bin/dasyu.js",
-    "dasyu-mcp": "./bin/dasyu-mcp.js"
+    "dasyu": "bin/dasyu.js",
+    "dasyu-mcp": "bin/dasyu-mcp.js"
   },
   "files": [
     "dist",
