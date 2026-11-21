@@ -1,4 +1,4 @@
-import type { PageContext } from '../core/types';
+import type { PageContext, CrawlOptions, CrawlResult } from '../core/types';
 
 /**
  * Lifecycle hooks for Dasyu plugins.
@@ -8,10 +8,16 @@ export interface DasyuPlugin {
   /** Unique name of the plugin */
   name: string;
 
+  /** Optional semantic version of the plugin (e.g., '1.0.0') */
+  version?: string;
+
+  /** Optional human-readable description of what the plugin does */
+  description?: string;
+
   /**
-   * Hook called when the crawler begins execution.
+   * Hook called when the crawler begins execution, receiving the active CrawlOptions.
    */
-  onStart?: () => Promise<void> | void;
+  onStart?: (options: CrawlOptions) => Promise<void> | void;
 
   /**
    * Hook called immediately after a page is navigated to and DOM content is ready,
@@ -37,8 +43,9 @@ export interface DasyuPlugin {
 
   /**
    * Hook called when the crawler finishes processing all pages in the queue.
+   * Receives the complete CrawlResult (crawled pages, errors, total duration) and initial CrawlOptions.
    */
-  onComplete?: () => Promise<void> | void;
+  onComplete?: (result: CrawlResult, options: CrawlOptions) => Promise<void> | void;
 }
 
 /**
@@ -48,8 +55,9 @@ export interface DasyuPlugin {
  * ```ts
  * export default definePlugin({
  *   name: 'my-custom-plugin',
- *   async onPageLoad(ctx) {
- *     console.log('Inspecting:', ctx.url);
+ *   version: '1.0.0',
+ *   async onComplete(result, options) {
+ *     console.log(`Crawl finished with ${result.pages.length} pages.`);
  *   },
  * });
  * ```

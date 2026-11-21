@@ -6,6 +6,7 @@ import { captureScreenshot, dismissCookieBanners } from '../extractors/screensho
 import { extractPageContent } from '../extractors/content';
 import { ModalExplorerPlugin } from '../plugins/modal';
 import { loadPlugins } from '../plugins/loader';
+import { logger } from '../cli/logger';
 
 /**
  * Main engine for Dasyu web crawling, snapshotting, and content extraction.
@@ -54,6 +55,23 @@ export class DasyuCrawler {
     this.abort();
     if (!this.persistentBrowser) {
       await this.browserManager.close();
+    }
+  }
+
+  /**
+   * Safely invokes a plugin lifecycle hook, capturing errors to prevent
+   * a single faulty plugin from crashing the crawler queue.
+   */
+  private async safeInvokeHook<T>(
+    plugin: DasyuPlugin,
+    hookName: string,
+    fn: () => Promise<T> | T
+  ): Promise<T | undefined> {
+    try {
+      return await fn();
+    } catch (err: any) {
+      logger.warn(`[Plugin:${plugin.name}] Error in ${hookName}: ${err?.message || String(err)}`);
+      return undefined;
     }
   }
 
@@ -117,9 +135,9 @@ export class DasyuCrawler {
         this.plugins.push(...externalPlugins);
       }
 
-      // Notify plugins onStart
+      // Notify plugins onStart with CrawlOptions
       for (const plugin of this.plugins) {
-        await plugin.onStart?.();
+        await plugin.onStart?.(this.options);
       }
 
       const concurrency = this.options.concurrency!;
@@ -183,17 +201,19 @@ export class DasyuCrawler {
 
       await Promise.all(workers);
 
-      // Notify plugins onComplete
-      for (const plugin of this.plugins) {
-        await plugin.onComplete?.();
-      }
-
-      return {
+      const result: CrawlResult = {
         startUrl: this.options.startUrl,
         totalDurationMs: Date.now() - startTime,
         pages,
         errors,
       };
+
+      // Notify plugins onComplete with CrawlResult and CrawlOptions
+      for (const plugin of this.plugins) {
+        await this.safeInvokeHook(plugin, 'onComplete', () => plugin.onComplete?.(result, this.options));
+      }
+
+      return result;
     } finally {
       this.isAborted = false;
       // Shut down browser if we created it internally (not injected by REPL/tests)
@@ -255,7 +275,7 @@ export class DasyuCrawler {
 
       // 1. Invoke onPageLoad plugins
       for (const plugin of this.plugins) {
-        await plugin.onPageLoad?.(ctx);
+        await this.safeInvokeHook(plugin, 'onPageLoad', () => plugin.onPageLoad?.(ctx));
       }
 
       // 2. Extract outbound links if within depth limits
@@ -321,7 +341,7 @@ export class DasyuCrawler {
       const screenshotPath = await captureScreenshot(page, url, outputDir);
       pageData.screenshotPath = screenshotPath;
       for (const plugin of this.plugins) {
-        await plugin.onScreenshot?.(ctx, screenshotPath);
+        await this.safeInvokeHook(plugin, 'onScreenshot', () => plugin.onScreenshot?.(ctx, screenshotPath));
       }
 
       // 4. Extract clean Markdown content if enabled
@@ -330,13 +350,13 @@ export class DasyuCrawler {
         pageData.contentPath = contentPath;
         pageData.metadata = { ...pageData.metadata, ...metadata };
         for (const plugin of this.plugins) {
-          await plugin.onExtract?.(ctx, contentPath);
+          await this.safeInvokeHook(plugin, 'onExtract', () => plugin.onExtract?.(ctx, contentPath));
         }
       }
 
       // 5. Invoke onAnalyze plugins (e.g., accessibility auditing)
       for (const plugin of this.plugins) {
-        const analysisResult = await plugin.onAnalyze?.(ctx);
+        const analysisResult = await this.safeInvokeHook(plugin, 'onAnalyze', () => plugin.onAnalyze?.(ctx));
         if (analysisResult && typeof analysisResult === 'object') {
           pageData.metadata = { ...pageData.metadata, ...analysisResult };
         }

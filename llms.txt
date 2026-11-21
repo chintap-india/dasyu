@@ -30,6 +30,7 @@
 - Interactive Modal & Drawer Explorer: `--explore-modals` automatically triggers modals, dialogs, drawers, and status menus, snapshots their contents, and extracts deep links.
 - Interactive Visual HTML Dashboard: Generates a self-contained, dark-mode `report.html` with instant live search and full-screen screenshot lightboxes.
 - Model Context Protocol (MCP) Server: Stdio JSON-RPC interface exposing `dasyu_crawl`, `dasyu_snapshot`, and `dasyu_inspect_auth` tools directly to AI coding agents.
+- Extensible Plugin Architecture: Dual-resolution loader supporting local files (`.mjs`, `.js`) and installed npm packages with lifecycle hooks (`onStart`, `onPageLoad`, `onScreenshot`, `onExtract`, `onAnalyze`, `onComplete`), metadata support, and fault-tolerant error isolation.
 - RAG Semantic Chunking: `--rag` chunks page content by headings and paragraphs for vector embeddings (`rag-chunks.jsonl`).
 - Relational Link Graph: `--graph` exports site topology into JSON and Mermaid diagrams (`site-graph.mmd`).
 - Zero Orphaned Browsers: Process signal handlers (`SIGINT`, `SIGTERM`, `beforeExit`) ensure no lingering Chromium processes.
@@ -48,7 +49,7 @@
   - `--seo`: SEO and metadata quality audit.
   - `--rag`: Export semantic chunks to `rag-chunks.jsonl`.
   - `--graph`: Export site link graph to `site-graph.json` and `site-graph.mmd`.
-  - `-p, --plugin <path>`: Load custom lifecycle plugin.
+  - `-p, --plugin <paths...>`: Load custom lifecycle plugin(s) from local file paths or installed npm packages.
   - `--config <path>`: Load configuration file (`dasyu.config.js`).
 
 - `dasyu auth login <url> [-o ./auth.json]`: Launch interactive browser to log in and capture session.

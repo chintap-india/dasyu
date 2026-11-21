@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { loadPlugin, loadPlugins, loadConfigFile } from '../src/plugins/loader';
 import { definePlugin } from '../src/plugins/base';
 import { DEFAULT_TECH_RULES, detectUiFramework } from '../src/plugins/modal';
-import type { TechDetectionRule } from '../src/core/types';
+import { DasyuCrawler } from '../src/core/crawler';
+import type { TechDetectionRule, CrawlResult, CrawlOptions } from '../src/core/types';
 
 describe('Plugin Architecture & Loader', () => {
   const tmpDir = path.join(process.cwd(), 'test-plugin-temp');
@@ -131,5 +132,117 @@ describe('Plugin Architecture & Loader', () => {
 
     const result = await detectUiFramework(mockPage, [customRule]);
     expect(result.componentLibraries).toContain('Shoelace Web Components');
+  });
+
+  it('should support plugin metadata (version, description)', () => {
+    const plugin = definePlugin({
+      name: 'test-meta-plugin',
+      version: '1.2.3',
+      description: 'Generates living documentation from crawl assets',
+    });
+
+    expect(plugin.name).toBe('test-meta-plugin');
+    expect(plugin.version).toBe('1.2.3');
+    expect(plugin.description).toContain('living documentation');
+  });
+
+  it('should pass CrawlResult and CrawlOptions to onComplete hook', async () => {
+    let capturedResult: CrawlResult | undefined;
+    let capturedOptions: CrawlOptions | undefined;
+    let startOptions: CrawlOptions | undefined;
+
+    const testPlugin = definePlugin({
+      name: 'summary-collector',
+      onStart(options) {
+        startOptions = options;
+      },
+      onComplete(result, options) {
+        capturedResult = result;
+        capturedOptions = options;
+      },
+    });
+
+    const mockPage: any = {
+      goto: vi.fn().mockResolvedValue({ status: () => 200 }),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      title: vi.fn().mockResolvedValue('Test Home'),
+      evaluate: vi.fn().mockResolvedValue([]),
+      screenshot: vi.fn().mockResolvedValue(Buffer.from('')),
+      close: vi.fn().mockResolvedValue(undefined),
+      isClosed: vi.fn().mockReturnValue(false),
+    };
+
+    const mockBrowserManager: any = {
+      acquirePage: vi.fn().mockResolvedValue(mockPage),
+      releasePage: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const crawler = new DasyuCrawler(
+      {
+        startUrl: 'https://example.com',
+        maxDepth: 1,
+        plugins: [testPlugin],
+      },
+      mockBrowserManager
+    );
+
+    const crawlResult = await crawler.run();
+    expect(startOptions).toBeDefined();
+    expect(startOptions?.startUrl).toBe('https://example.com');
+    expect(capturedResult).toBeDefined();
+    expect(capturedResult?.startUrl).toBe('https://example.com');
+    expect(capturedResult?.pages.length).toBe(1);
+    expect(capturedOptions?.maxDepth).toBe(1);
+    expect(crawlResult.pages[0].title).toBe('Test Home');
+  });
+
+  it('should isolate page-level hook errors without crashing crawler queue', async () => {
+    const buggyPlugin = definePlugin({
+      name: 'buggy-plugin',
+      onPageLoad() {
+        throw new Error('Exploding onPageLoad hook');
+      },
+      onScreenshot() {
+        throw new Error('Exploding onScreenshot hook');
+      },
+      onExtract() {
+        throw new Error('Exploding onExtract hook');
+      },
+      onAnalyze() {
+        throw new Error('Exploding onAnalyze hook');
+      },
+    });
+
+    const mockPage: any = {
+      goto: vi.fn().mockResolvedValue({ status: () => 200 }),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+      title: vi.fn().mockResolvedValue('Resilient Page'),
+      evaluate: vi.fn().mockResolvedValue([]),
+      screenshot: vi.fn().mockResolvedValue(Buffer.from('')),
+      close: vi.fn().mockResolvedValue(undefined),
+      isClosed: vi.fn().mockReturnValue(false),
+    };
+
+    const mockBrowserManager: any = {
+      acquirePage: vi.fn().mockResolvedValue(mockPage),
+      releasePage: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const crawler = new DasyuCrawler(
+      {
+        startUrl: 'https://example.com/resilient',
+        maxDepth: 1,
+        plugins: [buggyPlugin],
+      },
+      mockBrowserManager
+    );
+
+    // Crawl must succeed and complete despite multiple hook exceptions
+    const result = await crawler.run();
+    expect(result.pages).toHaveLength(1);
+    expect(result.pages[0].title).toBe('Resilient Page');
+    expect(result.errors).toHaveLength(0);
   });
 });

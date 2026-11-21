@@ -1,27 +1,55 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 import type { DasyuPlugin } from './base';
 import type { CrawlOptions } from '../core/types';
 import { logger } from '../cli/logger';
 
 /**
  * Dynamically loads an external user plugin from a local file path or package specifier.
- * Supports ES Modules (.mjs, .js), CommonJS (.cjs, .js), class instances, and object literals.
+ * Supports ES Modules (.mjs, .js), CommonJS (.cjs, .js), class instances, factory functions,
+ * and installed npm packages (e.g., '@chintap/dasyu-plugin-docs').
  */
 export async function loadPlugin(specifier: string): Promise<DasyuPlugin> {
+  let fileUrl: string | undefined;
+
+  const isExplicitPath =
+    specifier.startsWith('./') ||
+    specifier.startsWith('../') ||
+    specifier.startsWith('/') ||
+    specifier.startsWith('file:') ||
+    /\.[mc]?[jt]sx?$/.test(specifier);
+
   const resolvedPath = path.isAbsolute(specifier)
     ? specifier
     : path.resolve(process.cwd(), specifier);
 
+  let fileExists = false;
   try {
     await fs.access(resolvedPath);
+    fileExists = true;
   } catch {
+    fileExists = false;
+  }
+
+  if (fileExists) {
+    fileUrl = pathToFileURL(resolvedPath).href;
+  } else if (isExplicitPath) {
     throw new Error(`Plugin file not found at: "${specifier}" (resolved: ${resolvedPath})`);
+  } else {
+    // Attempt resolving as an installed npm package via createRequire or dynamic import
+    try {
+      const req = createRequire(path.join(process.cwd(), 'package.json'));
+      const pkgPath = req.resolve(specifier);
+      fileUrl = pathToFileURL(pkgPath).href;
+    } catch {
+      // Fall back to direct specifier import (Node ESM package resolution)
+      fileUrl = specifier;
+    }
   }
 
   try {
-    const fileUrl = pathToFileURL(resolvedPath).href;
     const mod = await import(fileUrl);
     const rawPlugin = mod.default || mod.plugin || mod;
 
@@ -45,6 +73,9 @@ export async function loadPlugin(specifier: string): Promise<DasyuPlugin> {
     return pluginInstance;
   } catch (err: any) {
     if (err.message && err.message.startsWith('Invalid plugin structure')) {
+      throw err;
+    }
+    if (err.message && err.message.startsWith('Plugin file not found')) {
       throw err;
     }
     throw new Error(`Failed to load plugin from "${specifier}": ${err?.message || err}`);
