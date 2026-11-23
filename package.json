@@ -50,7 +50,7 @@
     "automation",
     "web-snapshot"
   ],
-  "author": "Chintap Studio (https://chintap.com)",
+  "author": "Chintap (https://chintap.com)",
   "license": "MIT",
   "dependencies": {
     "@axe-core/playwright": "^4.14.0",

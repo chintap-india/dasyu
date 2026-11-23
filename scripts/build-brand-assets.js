@@ -497,7 +497,7 @@ const renderHtmlHorizontalLight2400 = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// --- OpenGraph Card (1200x630): Dark Mode following Today & Chintap Studio specs ---
+// --- OpenGraph Card (1200x630): Dark Mode following Today & Chintap specs ---
 const renderHtmlOgCard = `<!DOCTYPE html>
 <html lang="en">
 <head>

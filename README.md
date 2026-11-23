@@ -512,7 +512,7 @@ npm run bump:minor
 
 ## 🎨 Brand Assets & Design System
 
-Dasyu shares the clean, high-precision aesthetic of Chintap Studio and the Today app:
+Dasyu shares the clean, high-precision aesthetic of Chintap and the Today app:
 
 | Asset | Preview | Dimensions / Usage |
 | :--- | :--- | :--- |
