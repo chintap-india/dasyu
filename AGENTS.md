@@ -77,7 +77,7 @@ Whenever the user or a task asks to release, version bump, or publish `@chintap/
 - Always verify all image URLs return `HTTP 200` before releasing.
 
 ### 2. Pre-Flight Verification & Metadata Sync
-- Ensure all 16 test files pass cleanly (`npm test`).
+- Ensure all 17 test files pass cleanly (`npm test`).
 - Compile TypeScript bundles (`npm run build`).
 - Verify `package.json` `"version"` matches the semantic release target.
 - Verify `package.json` `"files"` array includes `["dist", "bin", "README.md", "llms.txt"]`.
@@ -101,3 +101,30 @@ Whenever the user or a task asks to release, version bump, or publish `@chintap/
 - Scope: `@chintap/dasyu` with public access (`npm publish`).
 - Verify via `npm whoami` and ensure 2FA is active.
 - Verify published tarball contents: `npx @chintap/dasyu@<version> --version`.
+
+---
+
+## 🛠️ Development & Autonomous Workflow Guidelines (Best Practices)
+
+These strict rules govern all development and autonomous agent workflows across `@chintap/dasyu` and `@chintap/dasyu-astra`:
+
+### 1. Automated Clean Commit & Push Protocol (Zero Friction)
+- **Continuous Delivery**: Whenever code changes, feature enhancements, documentation updates, or bug fixes are verified, cleanly stage, commit, and push directly to `origin main`. Never pause to ask permission to commit or push — execute automatically.
+- **Working Tree Hygiene**: Ensure temporary crawl artifacts (`*-output/`, `test-*/`, `walkthrough.json`, `auth.json`) are ignored in `.gitignore` or removed before committing so `git status` remains 100% clean.
+
+### 2. Semantic Tagging for Major Features & Package Milestones
+- Whenever a major feature, new plugin suite, or significant architectural milestone is completed, create an annotated git tag (`git tag -a v<version> -m "Release v<version>: <summary>"`) and push the tag immediately (`git push origin v<version>`).
+
+### 3. Trail Learnings Persistence (`.trail/learnings/`)
+- Whenever a task discovers a crucial architectural decision, a user preference/correction, or fixes a recurring pitfall, persist it as a permanent learning using `trail note --title "..."`.
+- Permanent learnings prevent knowledge regression across sessions and allow subsequent autonomous agents to start with verified context.
+- Keep the Trail context graph in sync after significant code edits via `trail build`.
+
+### 4. Brand Name & Identity Integrity
+- The brand and company name is strictly **Chintap**.
+- **NEVER** use "Chintap Studio" or "Studio" under any circumstances.
+- Package author field must always be `"Chintap (https://chintap.com)"`.
+
+### 5. Pre-Flight Verification & Zero Broken Builds
+- Always run `npm test` and `npm run build` prior to committing or tagging.
+- Ensure all test suites pass with 100% success rate across all affected workspaces.
