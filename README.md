@@ -193,6 +193,7 @@ dasyu crawl https://chintap.com --open
 dasyu view ./output
 ```
 
+```bash
 # Automatically bundle into a ZIP archive:
 dasyu crawl https://chintap.com --zip
 
@@ -345,11 +346,21 @@ During exploration, Dasyu:
 
 ## 🔌 Custom Plugins & Configuration File
 
-You can author custom plugins or customize crawl settings using `dasyu.config.js`:
+Dasyu features a dual-resolution plugin system supporting both local JavaScript/ESM files (`.mjs`, `.js`) and installed npm packages. You can load plugins via CLI (`-p, --plugin`) or in a `dasyu.config.js` file:
+
+```bash
+# Load a local plugin file
+dasyu crawl https://example.com -p ./my-plugin.mjs
+
+# Load multiple plugins (local and installed npm packages)
+dasyu crawl https://example.com -p ./plugins/readability.mjs -p @chintap/dasyu-plugin-prose
+```
+
+### Configuration File (`dasyu.config.js`)
 
 ```javascript
 // dasyu.config.js
-import { definePlugin } from 'dasyu';
+import { definePlugin } from '@chintap/dasyu';
 
 export default {
   maxDepth: 2,
@@ -359,8 +370,37 @@ export default {
   plugins: [
     definePlugin({
       name: 'custom-logger',
+      version: '1.0.0',
+      description: 'Logs navigation events and computes custom metrics',
+
+      // Called before crawling begins
+      onStart: async (options) => {
+        console.log(`Starting crawl on ${options.startUrl}`);
+      },
+
+      // Called after DOMContentLoaded on each page, before extraction
       onPageLoad: async (ctx) => {
-        console.log(`Visited: ${ctx.url}`);
+        console.log(`Visited: ${ctx.url} (Status: ${ctx.data.status})`);
+      },
+
+      // Called after full-page screenshot is saved
+      onScreenshot: async (ctx, screenshotPath) => {
+        console.log(`Captured screenshot: ${screenshotPath}`);
+      },
+
+      // Called after markdown and metadata extraction
+      onExtract: async (ctx, contentPath) => {
+        console.log(`Extracted content: ${contentPath}`);
+      },
+
+      // Called for custom analysis; returned data merges into page metadata
+      onAnalyze: async (ctx) => {
+        return { customScore: 98.5 };
+      },
+
+      // Called when entire crawl completes
+      onComplete: async (result, options) => {
+        console.log(`Completed crawl: ${result.pages.length} pages processed.`);
       },
     }),
   ],
@@ -507,6 +547,10 @@ npm run bump:minor
 - **`RAG Semantic Chunking`** (`--rag`): ✅ Completed (generates heading-aware overlapping chunk embeddings in `./output/rag-chunks.jsonl`).
 - **`Site Link Graph Generator`** (`--graph`): ✅ Completed (outputs relational graph JSON and Mermaid flowchart diagrams in `./output/site-graph.mmd`).
 - **`Native MCP Server`** (`dasyu mcp`): ✅ Completed (Stdio JSON-RPC server powering AI agents in Gemini, Claude, and Cursor).
+- **`Prose & Readability Quality Auditor`** (`@chintap/dasyu-plugin-prose`): ✅ Available in Dasyu Astra (5-pillar linguistic linting powered by Unified & Retext: multi-formula grade levels, plain-English simplification, active voice, marketing cliché detection, and tech spellchecking).
+- **`Living Docs & Knowledge Base Synthesizer`** (`@chintap/dasyu-plugin-docs`): ✅ Available in Dasyu Astra (synthesizes VitePress/Markdown documentation trees with settled modal snapshot pairings).
+- **`Motion Walkthroughs & Video Storyboards`** (`@chintap/dasyu-plugin-video`): ✅ Available in Dasyu Astra (generates Remotion React animated video composition projects from crawled DOM journeys).
+- **`Executive Slide Decks & Pitch Presentations`** (`@chintap/dasyu-plugin-slides`): ✅ Available in Dasyu Astra (converts crawled routes and modal states into split-screen Marp presentation decks).
 
 ---
 

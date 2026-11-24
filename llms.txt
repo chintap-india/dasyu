@@ -40,9 +40,14 @@
   - `-d, --depth <N>`: Maximum BFS crawl depth (default: 1, range: 1-5).
   - `-c, --concurrency <N>`: Concurrent browser pages (default: 3).
   - `-o, --output <dir>`: Target output directory (default: `./output`).
+  - `-O, --open`: Automatically open visual HTML report in default browser upon completion.
+  - `--zip`: Export full visual dashboard and domain assets to a portable ZIP archive.
   - `--content`: Extract clean Markdown and JSON metadata.
   - `-m, --explore-modals`: Automatically explore modal dialogs and drawers.
-  - `--max-modals <N>`: Max modal triggers to explore per page (default: 3).
+  - `--max-modals <N>`: Max modal triggers to explore per page (default: 5).
+  - `--dismiss-modals`: Automatically detect and dismiss cookie consent banners and overlays.
+  - `--delay <ms>`: Throttling delay in milliseconds between page navigations.
+  - `--allow-external`: Allow crawling external domains outside start URL host.
   - `--auth <path>`: Playwright storageState JSON for authenticated crawls.
   - `--detect-auth`: Anomalyco Browse plugin to monitor login walls and 401/403 barriers.
   - `--a11y`: Automated WCAG 2.1 accessibility audits via axe-core.
@@ -55,10 +60,18 @@
 - `dasyu auth login <url> [-o ./auth.json]`: Launch interactive browser to log in and capture session.
 - `dasyu auth inspect <path>`: Inspect cookies and localStorage origins in a storageState file.
 - `dasyu auth import <input> [-o ./auth.json]`: Import external cookies or OpenCode Browse sessions.
-- `dasyu view [dir]`: Open generated visual HTML report in default browser.
-- `dasyu clean [dir]`: Clean output directories.
+- `dasyu view [dir] [--finder]`: Open generated visual HTML report in default browser (or reveal in Finder).
+- `dasyu zip [dir]`: Package crawl outputs into an offline, self-contained ZIP archive.
+- `dasyu clean [dir]`: Clean output directories (default `./output`, `./results`).
 - `dasyu mcp`: Launch native Model Context Protocol server over stdio.
 - `dasyu repl` (or bare `dasyu`): Enter interactive terminal shell.
+
+## Plugin Ecosystem & Specialized Astra Arsenal
+Dasyu supports a dual-resolution plugin loader accepting local files (`.mjs`, `.js`) and npm packages with lifecycle hooks (`onStart`, `onPageLoad`, `onScreenshot`, `onExtract`, `onAnalyze`, `onComplete`):
+- `@chintap/dasyu-plugin-prose`: Production-grade editorial, readability, and SEO prose quality auditor (5 pillars: 7-formula readability scoring, plain-English simplification via `retext-simplify`, active voice enforcement via `retext-passive`, marketing cliché detection via `nlcst-search`, and smart spellchecking with tech whitelist via `retext-spell`). Outputs JSON, Markdown, and visual HTML dashboards.
+- `@chintap/dasyu-plugin-docs`: Living documentation and visual knowledge base synthesizer (emits VitePress/Markdown doc trees with paired settled modal snapshots).
+- `@chintap/dasyu-plugin-video`: Automated motion walkthroughs and Remotion storyboard video composition projects.
+- `@chintap/dasyu-plugin-slides`: Executive pitch decks and split-screen Marp presentations.
 
 ## Authentication Pro-Tips for AI Agents & Developers
 - Single Page Applications (SPAs): Point `auth login` to the protected workspace route (e.g., `/tasks` or `/dashboard`) rather than `/login` to avoid 404s behind the login modal.
@@ -82,7 +95,17 @@ For Antigravity, Claude Desktop, Cursor, Gemini:
 
 ## Programmatic TypeScript Usage
 ```typescript
-import { DasyuCrawler } from '@chintap/dasyu';
+import {
+  DasyuCrawler,
+  definePlugin,
+  createBrowsePlugin,
+  createSeoPlugin,
+  createAccessibilityPlugin,
+  createModalPlugin,
+  interactiveLogin,
+  inspectStorageState,
+  exportDashboardZip,
+} from '@chintap/dasyu';
 
 const crawler = new DasyuCrawler({
   startUrl: 'https://chintap.com',
