@@ -9,3 +9,9 @@ auth.json
 test-*/
 coverage/
 .claude/settings.local.json
+docs-output/
+prose-output/
+video-output/
+video-crawl-test/
+walkthrough.json
+temp-*/
